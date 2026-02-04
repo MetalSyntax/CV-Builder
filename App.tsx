@@ -19,8 +19,28 @@ const App: React.FC = () => {
   // Customization State
   const [primaryColor, setPrimaryColor] = useState<string>('#651d3b'); 
   const [accentColor, setAccentColor] = useState<string>('#b3b3b3'); 
+  const [contactBarColor, setContactBarColor] = useState<string>('#30101d');
   const [textColor, setTextColor] = useState<string>('#374151'); 
   const [profileImage, setProfileImage] = useState<string>(DEFAULT_IMAGE);
+
+  const THEMES = [
+    { name: 'Classic Burgundy', primary: '#651d3b', accent: '#9ca3af', contact: '#30101d' },
+    { name: 'Midnight Blue', primary: '#1e3a8a', accent: '#60a5fa', contact: '#1e1b4b' },
+    { name: 'Forest Green', primary: '#064e3b', accent: '#34d399', contact: '#022c22' },
+    { name: 'Elegant Slate', primary: '#334155', accent: '#94a3b8', contact: '#0f172a' },
+    { name: 'Autumn Gold', primary: '#78350f', accent: '#fbbf24', contact: '#451a03' },
+    { name: 'Deep Purple', primary: '#4c1d95', accent: '#a78bfa', contact: '#2e1065' },
+    { name: 'Modern Teal', primary: '#134e4a', accent: '#2dd4bf', contact: '#042f2e' },
+    { name: 'Rose Quartz', primary: '#831843', accent: '#f472b6', contact: '#500724' },
+    { name: 'Minimalist Gray', primary: '#18181b', accent: '#71717a', contact: '#09090b' },
+    { name: 'Royal Indigo', primary: '#312e81', accent: '#818cf8', contact: '#1e1b4b' },
+  ];
+
+  const applyTheme = (theme: typeof THEMES[0]) => {
+    setPrimaryColor(theme.primary);
+    setAccentColor(theme.accent);
+    setContactBarColor(theme.contact);
+  };
   
   const imageInputRef = useRef<HTMLInputElement>(null);
   const txtInputRef = useRef<HTMLInputElement>(null);
@@ -129,6 +149,19 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-500 uppercase">Barra de Contacto</label>
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="color" 
+                      value={contactBarColor} 
+                      onChange={(e) => setContactBarColor(e.target.value)}
+                      className="w-10 h-10 rounded cursor-pointer border-0 p-0"
+                    />
+                    <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{contactBarColor}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
                   <label className="text-xs font-medium text-gray-500 uppercase">Texto Cuerpo</label>
                   <div className="flex items-center gap-3">
                     <input 
@@ -139,6 +172,26 @@ const App: React.FC = () => {
                     />
                     <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{textColor}</span>
                   </div>
+                </div>
+              </div>
+
+              {/* Theme Presets */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-gray-700">Temas Preestablecidos</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {THEMES.map((theme, i) => (
+                    <button
+                      key={i}
+                      onClick={() => applyTheme(theme)}
+                      className="flex items-center gap-2 p-2 rounded border border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition text-left"
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <div className="w-4 h-2 rounded-t-sm" style={{ backgroundColor: theme.primary }}></div>
+                        <div className="w-4 h-1" style={{ backgroundColor: theme.contact }}></div>
+                      </div>
+                      <span className="text-[10px] font-medium text-gray-600 truncate">{theme.name}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -226,6 +279,7 @@ const App: React.FC = () => {
           data={resumeData} 
           primaryColor={primaryColor}
           accentColor={accentColor}
+          contactBarColor={contactBarColor}
           textColor={textColor}
           profileImage={profileImage}
         />

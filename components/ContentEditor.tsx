@@ -160,7 +160,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange }) => {
         <div className="flex justify-between items-center border-b pb-2">
            <h3 className="font-bold text-gray-700">Educación</h3>
            <button 
-             onClick={() => addItem<EducationItem>('education', { degree: 'Nuevo Título', institution: 'Institución', period: '2024', location: '' })}
+             onClick={() => addItem('education', { degree: 'Nuevo Título', institution: 'Institución', period: '2024', location: '' })}
              className="text-blue-600 hover:bg-blue-50 p-1 rounded"
            >
              <Plus size={16} />
@@ -193,6 +193,102 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange }) => {
                 className="w-full bg-transparent text-xs text-gray-500 focus:bg-white focus:outline-none"
                 placeholder="Periodo"
               />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Courses */}
+      <section className="space-y-3">
+        <div className="flex justify-between items-center border-b pb-2">
+           <h3 className="font-bold text-gray-700">Cursos / Certificaciones</h3>
+           <button 
+             onClick={() => addItem('courses', { title: 'Nuevo Curso', date: '2024', provider: 'Institución' })}
+             className="text-blue-600 hover:bg-blue-50 p-1 rounded"
+           >
+             <Plus size={16} />
+           </button>
+        </div>
+        <div className="space-y-4">
+          {data.courses.map((course, idx) => (
+            <div key={idx} className="bg-gray-50 p-3 rounded border relative">
+              <button 
+                onClick={() => removeItem('courses', idx)}
+                className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+              >
+                <Trash2 size={14} />
+              </button>
+              <input 
+                value={course.title} 
+                onChange={(e) => updateItem('courses', idx, 'title', e.target.value)}
+                className="w-full bg-transparent font-bold text-sm mb-1 focus:bg-white focus:outline-none"
+                placeholder="Título del curso"
+              />
+              <div className="flex gap-2">
+                <input 
+                  value={course.provider} 
+                  onChange={(e) => updateItem('courses', idx, 'provider', e.target.value)}
+                  className="w-2/3 bg-transparent text-xs text-gray-600 focus:bg-white focus:outline-none"
+                  placeholder="Proveedor / Institución"
+                />
+                <input 
+                  value={course.date} 
+                  onChange={(e) => updateItem('courses', idx, 'date', e.target.value)}
+                  className="w-1/3 bg-transparent text-xs text-gray-500 focus:bg-white focus:outline-none"
+                  placeholder="Fecha"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Languages */}
+      <section className="space-y-3">
+        <div className="flex justify-between items-center border-b pb-2">
+           <h3 className="font-bold text-gray-700">Idiomas</h3>
+           <button 
+             onClick={() => addItem('languages', { language: 'Nuevo Idioma', level: 'Intermedio', score: 50 })}
+             className="text-blue-600 hover:bg-blue-50 p-1 rounded"
+           >
+             <Plus size={16} />
+           </button>
+        </div>
+        <div className="space-y-4">
+          {data.languages.map((lang, idx) => (
+            <div key={idx} className="bg-gray-50 p-3 rounded border relative">
+              <button 
+                onClick={() => removeItem('languages', idx)}
+                className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+              >
+                <Trash2 size={14} />
+              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <input 
+                  value={lang.language} 
+                  onChange={(e) => updateItem('languages', idx, 'language', e.target.value)}
+                  className="w-full bg-transparent font-bold text-sm focus:bg-white focus:outline-none"
+                  placeholder="Idioma"
+                />
+                <input 
+                  value={lang.level} 
+                  onChange={(e) => updateItem('languages', idx, 'level', e.target.value)}
+                  className="w-full bg-transparent text-xs text-gray-600 focus:bg-white focus:outline-none"
+                  placeholder="Nivel (Ej: Nativo)"
+                />
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <label className="text-[10px] text-gray-400 uppercase font-bold">Puntaje</label>
+                <input 
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={lang.score} 
+                  onChange={(e) => updateItem('languages', idx, 'score', parseInt(e.target.value))}
+                  className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+                <span className="text-[10px] font-mono text-gray-500 w-8">{lang.score}%</span>
+              </div>
             </div>
           ))}
         </div>
