@@ -5,6 +5,8 @@ import ContentEditor from './components/ContentEditor';
 import { INITIAL_DATA } from './constants';
 import { ResumeData } from './types';
 import { parseResumeTxt } from './utils/resumeParser';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // Placeholder image
 const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop";
@@ -21,6 +23,7 @@ const App: React.FC = () => {
   const [accentColor, setAccentColor] = useState<string>('#b3b3b3'); 
   const [contactBarColor, setContactBarColor] = useState<string>('#30101d');
   const [textColor, setTextColor] = useState<string>('#374151'); 
+  const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg'>('base');
   const [profileImage, setProfileImage] = useState<string>(DEFAULT_IMAGE);
 
   const THEMES = [
@@ -41,9 +44,80 @@ const App: React.FC = () => {
     setAccentColor(theme.accent);
     setContactBarColor(theme.contact);
   };
+
+  const updateField = (field: keyof ResumeData, value: any) => {
+    setResumeData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const moveItem = (field: keyof ResumeData, index: number, direction: 'up' | 'down') => {
+    const list = [...(resumeData[field] as any[])];
+    if (direction === 'up' && index > 0) {
+      [list[index], list[index - 1]] = [list[index - 1], list[index]];
+    } else if (direction === 'down' && index < list.length - 1) {
+      [list[index], list[index + 1]] = [list[index + 1], list[index]];
+    }
+    updateField(field, list);
+  };
   
   const imageInputRef = useRef<HTMLInputElement>(null);
   const txtInputRef = useRef<HTMLInputElement>(null);
+
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    const element = document.getElementById('resume-content');
+    if (!element) return;
+
+    try {
+      setIsExporting(true);
+      
+      // Optimizamos temporalmente el elemento para la captura
+      const originalShadow = element.style.boxShadow;
+      element.style.boxShadow = 'none';
+
+      const canvas = await html2canvas(element, {
+        scale: 3, 
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        // Evitamos que el scroll actual del navegador desplace la captura
+        scrollY: -window.scrollY,
+        scrollX: -window.scrollX,
+        onclone: (clonedDoc) => {
+          const el = clonedDoc.getElementById('resume-content');
+          if (el) {
+            el.style.transform = 'none';
+            el.style.margin = '0';
+            el.style.boxShadow = 'none';
+            el.style.position = 'fixed';
+            el.style.top = '0';
+            el.style.left = '0';
+          }
+        }
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'letter',
+        compress: true
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      // Ajuste milimétrico para eliminar cualquier borde blanco residual
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      pdf.save(`CV_${resumeData.name.replace(/\s+/g, '_')}.pdf`);
+    } catch (error) {
+      console.error('Error generando PDF:', error);
+      alert('Hubo un error al generar el PDF. Por favor intenta usando el botón de imprimir del navegador.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handlePrint = () => {
     window.print();
@@ -114,7 +188,7 @@ const App: React.FC = () => {
         </div>
 
         {/* Sidebar Content (Scrollable) */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-8">
           
           {activeTab === 'design' ? (
             <>
@@ -171,6 +245,24 @@ const App: React.FC = () => {
                       className="w-10 h-10 rounded cursor-pointer border-0 p-0"
                     />
                     <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{textColor}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-500 uppercase">Tamaño de Letra</label>
+                  <div className="flex gap-2">
+                    {(['sm', 'base', 'lg'] as const).map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => setFontSize(size)}
+                        className={`flex-1 py-1.5 rounded border text-xs font-medium capitalize transition ${
+                          fontSize === size 
+                            ? 'bg-blue-600 border-blue-600 text-white' 
+                            : 'bg-white border-gray-200 text-gray-600 hover:border-blue-400'
+                        }`}
+                      >
+                        {size === 'sm' ? 'Pequeño' : size === 'base' ? 'Normal' : 'Grande'}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -254,6 +346,7 @@ const App: React.FC = () => {
               <ContentEditor 
                 data={resumeData} 
                 onChange={setResumeData} 
+                onMoveItem={moveItem}
               />
             </>
           )}
@@ -261,13 +354,16 @@ const App: React.FC = () => {
         </div>
 
         {/* Footer Actions */}
-        <div className="p-6 border-t bg-gray-50 mt-auto">
+        <div className="p-6 border-t bg-gray-50 mt-auto space-y-3">
           <button 
             onClick={handlePrint}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition flex items-center justify-center gap-2"
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition flex flex-col items-center justify-center leading-tight"
           >
-            <Download size={20} />
-            Guardar PDF
+            <div className="flex items-center gap-2">
+              <Printer size={18} />
+              <span>Guardar PDF (Seleccionable)</span>
+            </div>
+            <span className="text-[9px] opacity-80 font-normal mt-0.5">Recomendado para ATS / Copiar texto</span>
           </button>
         </div>
         
@@ -281,6 +377,7 @@ const App: React.FC = () => {
           accentColor={accentColor}
           contactBarColor={contactBarColor}
           textColor={textColor}
+          fontSize={fontSize}
           profileImage={profileImage}
         />
       </main>

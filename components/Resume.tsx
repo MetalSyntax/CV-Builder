@@ -8,6 +8,7 @@ interface ResumeProps {
   accentColor: string;
   contactBarColor: string;
   textColor: string;
+  fontSize: 'sm' | 'base' | 'lg';
   profileImage: string;
 }
 
@@ -17,22 +18,38 @@ const Resume: React.FC<ResumeProps> = ({
   accentColor, 
   contactBarColor,
   textColor, 
+  fontSize,
   profileImage 
 }) => {
+  const { fontSizes } = data;
+
   return (
-    <div className="bg-white w-[215.9mm] min-h-[279.4mm] mx-auto shadow-2xl print:shadow-none print:w-[215.9mm] print:h-[279.4mm] print:m-0 print:p-0 overflow-hidden relative font-sans text-gray-800">
+    <div 
+      id="resume-content"
+      style={{ color: textColor, fontSize: `${fontSizes.content}px` }}
+      className="bg-white w-[215.9mm] h-[279.4mm] mx-auto shadow-2xl print:shadow-none print:w-[215.9mm] print:h-[279.4mm] print:m-0 print:p-0 overflow-hidden relative font-sans flex-shrink-0"
+    >
       
       {/* Header Section */}
       <header style={{ backgroundColor: primaryColor }} className="text-white pt-8 pb-6 px-10 relative">
         <div className="flex justify-between items-center mr-48">
           <div>
-            <h1 className="text-4xl font-bold mb-1 leading-tight">
+            <h1 
+              style={{ fontSize: `${fontSizes.name}px` }}
+              className="font-bold mb-1 leading-tight"
+            >
               {data.name}
             </h1>
-            <p className="text-lg opacity-90 mb-3 font-medium">
+            <p 
+              style={{ fontSize: `${fontSizes.title}px` }}
+              className="opacity-90 mb-3 font-medium"
+            >
               {data.title}
             </p>
-            <p className="text-[11px] leading-relaxed opacity-95 text-justify max-w-2xl">
+            <p 
+              style={{ fontSize: `${fontSizes.summary}px` }}
+              className="leading-tight opacity-95 text-justify max-w-2xl"
+            >
               {data.summary}
             </p>
           </div>
@@ -49,19 +66,27 @@ const Resume: React.FC<ResumeProps> = ({
       </header>
 
       {/* Contact Bar */}
-      <div style={{ backgroundColor: contactBarColor }} className="text-white py-1.5 px-10 flex gap-6 items-center text-[9px] justify-start">
-        <div className="flex items-center gap-1.5">
-          <Mail size={11} className="text-white opacity-90" />
+      <div 
+        style={{ backgroundColor: contactBarColor, fontSize: `${fontSizes.contact}px` }} 
+        className="text-white py-1.5 px-10 flex gap-6 items-center justify-start"
+      >
+        <a href={`mailto:${data.contact.email}`} className="flex items-center gap-1.5 hover:underline">
+          <Mail size={fontSizes.contact + 2} className="text-white opacity-90" />
           <span>{data.contact.email}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Phone size={11} className="text-white opacity-90" />
+        </a>
+        <a href={`tel:${data.contact.phone}`} className="flex items-center gap-1.5 hover:underline">
+          <Phone size={fontSizes.contact + 2} className="text-white opacity-90" />
           <span>{data.contact.phone}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <MapPin size={11} className="text-white opacity-90" />
+        </a>
+        <a 
+          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.contact.location)}`} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="flex items-center gap-1.5 hover:underline"
+        >
+          <MapPin size={fontSizes.contact + 2} className="text-white opacity-90" />
           <span className="max-w-[300px] truncate">{data.contact.location}</span>
-        </div>
+        </a>
       </div>
 
       {/* Main Content Two Columns - 50/50 approx */}
@@ -72,15 +97,18 @@ const Resume: React.FC<ResumeProps> = ({
           
           {/* Education */}
           <section>
-            <h2 className="text-gray-400 text-[14px] font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100">
+            <h2 
+              style={{ fontSize: `${fontSizes.sectionHeaders}px` }}
+              className="text-gray-400 font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100"
+            >
               EDUCACIÓN
             </h2>
             <div className="space-y-3">
               {data.education.map((edu, index) => (
                 <div key={index}>
-                  <h3 className="font-bold text-[13px] leading-tight text-gray-900">{edu.degree}</h3>
-                  <div className="text-[12px] font-bold text-gray-700 leading-tight">{edu.institution}</div>
-                  <div className="flex justify-between text-[9px] text-gray-400 mt-0.5">
+                  <h3 className="font-bold leading-tight text-gray-900">{edu.degree}</h3>
+                  <div className="font-bold text-gray-700 leading-tight opacity-90">{edu.institution}</div>
+                  <div className="flex justify-between text-gray-400 mt-0.5 opacity-80" style={{ fontSize: '0.85em' }}>
                     <span>{edu.period}</span>
                     <span className="italic">{edu.location}</span>
                   </div>
@@ -91,24 +119,25 @@ const Resume: React.FC<ResumeProps> = ({
 
           {/* Experience */}
           <section>
-            <h2 className="text-gray-400 text-[14px] font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100">
+            <h2 
+              style={{ fontSize: `${fontSizes.sectionHeaders}px` }}
+              className="text-gray-400 font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100"
+            >
               EXPERIENCIA
             </h2>
             <div className="space-y-5">
               {data.experience.map((exp, index) => (
                 <div key={index}>
-                  <h3 className="font-bold text-[13px] leading-tight text-gray-900">{exp.role}</h3>
-                  <div className="font-bold text-[11px] text-gray-700 uppercase leading-tight">{exp.company}</div>
-                  <div className="flex justify-between text-[9px] text-gray-400 mb-1">
+                  <h3 className="font-bold leading-tight text-gray-900">{exp.role}</h3>
+                  <div className="font-bold text-gray-700 leading-tight opacity-90">{exp.company}</div>
+                  <div className="flex justify-between text-gray-400 mt-0.5 opacity-80" style={{ fontSize: '0.85em' }}>
                     <span>{exp.period}</span>
                     <span className="italic">{exp.location}</span>
                   </div>
-                  <div className="text-[9px] uppercase font-bold text-gray-400 mb-1 italic">Logros/Tareas</div>
-                  <ul className="space-y-1">
+                  <ul className="mt-2 space-y-1 text-gray-600 list-disc list-inside">
                     {exp.tasks.map((task, i) => (
-                      <li key={i} className="text-[10px] leading-tight relative pl-3 text-gray-700">
-                        <span className="absolute left-0 top-[6px] w-1 h-1 rounded-full bg-gray-400"></span>
-                        {task}
+                      <li key={i} className="pl-1">
+                        <span className="relative -left-1">{task}</span>
                       </li>
                     ))}
                   </ul>
@@ -124,7 +153,10 @@ const Resume: React.FC<ResumeProps> = ({
           
           {/* Skills - Tag cloud style */}
           <section>
-            <h2 className="text-gray-400 text-[14px] font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100">
+            <h2 
+              style={{ fontSize: `${fontSizes.sectionHeaders}px` }}
+              className="text-gray-400 font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100"
+            >
               HABILIDADES
             </h2>
             <div className="flex flex-wrap gap-1 mr-4">
@@ -132,7 +164,7 @@ const Resume: React.FC<ResumeProps> = ({
                 <span 
                   key={index}
                   style={{ backgroundColor: primaryColor }}
-                  className="text-white text-[9.5px] px-2.5 py-0.5 rounded-[4px] font-medium opacity-85"
+                  className="text-white px-2.5 py-0.5 rounded-[4px] font-medium opacity-85"
                 >
                   {skill}
                 </span>
@@ -142,14 +174,19 @@ const Resume: React.FC<ResumeProps> = ({
 
           {/* Courses */}
           <section>
-            <h2 className="text-gray-400 text-[14px] font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100">
+            <h2 
+              style={{ fontSize: `${fontSizes.sectionHeaders}px` }}
+              className="text-gray-400 font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100"
+            >
               CURSOS
             </h2>
             <div className="space-y-3">
               {data.courses.map((course, index) => (
                 <div key={index}>
-                  <div className="font-bold text-[11px] leading-tight text-gray-800">{course.title} ({course.date})</div>
-                  <div className="text-[10px] text-gray-400 italic font-medium">Impartido por: {course.provider.replace('Impartido por: ', '')}</div>
+                  <div className="font-bold leading-tight text-gray-800">{course.title} ({course.date})</div>
+                  <div className="text-gray-400 italic font-medium opacity-80" style={{ fontSize: '0.85em' }}>
+                    Impartido por: {course.provider.replace('Impartido por: ', '')}
+                  </div>
                 </div>
               ))}
             </div>
@@ -157,31 +194,53 @@ const Resume: React.FC<ResumeProps> = ({
 
           {/* Languages */}
           <section>
-            <h2 className="text-gray-400 text-[14px] font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100">
+            <h2 
+              style={{ fontSize: `${fontSizes.sectionHeaders}px` }}
+              className="text-gray-400 font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100"
+            >
               IDIOMAS
             </h2>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-              {data.languages.map((lang, index) => (
-                <div key={index}>
-                  <div className="text-[11px] font-bold text-gray-800">{lang.language}</div>
-                  <div className="text-[9px] text-gray-400 italic font-medium leading-tight">{lang.level}</div>
-                </div>
-              ))}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              {data.languages.map((lang, index) => {
+                const dots = Math.round(lang.score / 20);
+                return (
+                  <div key={index} className="flex flex-col">
+                    <div className="font-bold text-gray-800 leading-tight">{lang.language}</div>
+                    <div className="flex items-center gap-0.5 mt-0.5">
+                      {[1, 2, 3, 4, 5].map((dot) => (
+                        <div 
+                          key={dot} 
+                          className={`w-1.5 h-1.5 rounded-full ${dot <= dots ? 'bg-gray-400' : 'bg-gray-200'}`}
+                        />
+                      ))}
+                    </div>
+                    <div className="text-gray-400 italic font-medium mt-0.5 leading-tight opacity-80" style={{ fontSize: '0.85em' }}>
+                      {lang.level}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </section>
 
            {/* Interests */}
            <section>
-            <h2 className="text-gray-400 text-[14px] font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100">
-              INTERESES
+            <h2 
+              style={{ fontSize: `${fontSizes.sectionHeaders}px` }}
+              className="text-gray-400 font-bold uppercase tracking-[0.15em] mb-3 border-b-2 border-gray-100"
+            >
+              INTERESES PROFESIONALES
             </h2>
-            <ul className="grid grid-cols-1 gap-0.5">
+            <div className="flex flex-wrap gap-2">
                {data.interests.map((interest, i) => (
-                  <li key={i} className="text-[11px] text-gray-700 font-medium lowercase first-letter:uppercase">
+                  <div 
+                    key={i} 
+                    className="bg-white border border-gray-300 rounded-[5px] px-3 py-1 font-medium text-gray-800 shadow-sm whitespace-nowrap"
+                  >
                     {interest}
-                  </li>
+                  </div>
                 ))}
-            </ul>
+            </div>
           </section>
 
         </div>

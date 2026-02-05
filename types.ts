@@ -34,4 +34,12 @@ export interface ResumeData {
   courses: CourseItem[];
   languages: { language: string; level: string; score: number }[];
   interests: string[];
+  fontSizes: {
+    name: number;
+    title: number;
+    summary: number;
+    sectionHeaders: number;
+    content: number;
+    contact: number;
+  };
 }

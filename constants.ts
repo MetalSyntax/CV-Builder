@@ -75,5 +75,13 @@ export const INITIAL_DATA: ResumeData = {
     "Consectetur Adipiscing",
     "Tempor Incididunt",
     "Magna Aliqua"
-  ]
+  ],
+  fontSizes: {
+    name: 36,
+    title: 18,
+    summary: 11,
+    contact: 9,
+    sectionHeaders: 14,
+    content: 12
+  }
 };

@@ -1,13 +1,14 @@
 import React from 'react';
 import { ResumeData, ExperienceItem, EducationItem } from '../types';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface ContentEditorProps {
   data: ResumeData;
   onChange: (data: ResumeData) => void;
+  onMoveItem: (field: keyof ResumeData, index: number, direction: 'up' | 'down') => void;
 }
 
-const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange }) => {
+const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange, onMoveItem }) => {
   
   const updateField = (field: keyof ResumeData, value: any) => {
     onChange({ ...data, [field]: value });
@@ -37,6 +38,25 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange }) => {
     onChange({ ...data, [field]: newList });
   };
 
+  const updateFontSize = (field: keyof ResumeData['fontSizes'], value: number) => {
+    onChange({
+      ...data,
+      fontSizes: { ...data.fontSizes, [field]: value }
+    });
+  };
+
+  const FontSizeControl = ({ label, value, field }: { label: string, value: number, field: keyof ResumeData['fontSizes'] }) => (
+    <div className="flex items-center gap-2 mt-1">
+      <label className="text-[10px] text-gray-400 uppercase font-bold whitespace-nowrap">{label}</label>
+      <input 
+        type="range" min="6" max="72" value={value} 
+        onChange={(e) => updateFontSize(field, parseInt(e.target.value))}
+        className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+      />
+      <span className="text-[10px] font-mono text-gray-400 w-4">{value}px</span>
+    </div>
+  );
+
   return (
     <div className="space-y-6 pb-20">
       
@@ -51,6 +71,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange }) => {
             onChange={(e) => updateField('name', e.target.value)}
             className="w-full mt-1 p-2 border rounded text-sm"
           />
+          <FontSizeControl label="Tamaño Nombre" value={data.fontSizes.name} field="name" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-500">Título Profesional</label>
@@ -60,6 +81,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange }) => {
             onChange={(e) => updateField('title', e.target.value)}
             className="w-full mt-1 p-2 border rounded text-sm"
           />
+          <FontSizeControl label="Tamaño Título" value={data.fontSizes.title} field="title" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-500">Perfil / Resumen</label>
@@ -69,6 +91,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange }) => {
             onChange={(e) => updateField('summary', e.target.value)}
             className="w-full mt-1 p-2 border rounded text-sm"
           />
+          <FontSizeControl label="Tamaño Resumen" value={data.fontSizes.summary} field="summary" />
         </div>
       </section>
 
@@ -95,6 +118,14 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange }) => {
             className="w-full p-2 border rounded text-sm"
           />
         </div>
+        <FontSizeControl label="Tamaño Barra Contacto" value={data.fontSizes.contact} field="contact" />
+      </section>
+
+      {/* Global Section Controls */}
+      <section className="bg-blue-50 p-4 rounded-lg space-y-3">
+        <h4 className="text-xs font-bold text-blue-800 uppercase">Ajustes de Texto Globales</h4>
+        <FontSizeControl label="Encabezados (Educación, etc)" value={data.fontSizes.sectionHeaders} field="sectionHeaders" />
+        <FontSizeControl label="Contenido General" value={data.fontSizes.content} field="content" />
       </section>
 
       {/* Experience */}
@@ -111,12 +142,16 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange }) => {
         <div className="space-y-4">
           {data.experience.map((exp, idx) => (
             <div key={idx} className="bg-gray-50 p-3 rounded border relative group">
-              <button 
-                onClick={() => removeItem('experience', idx)}
-                className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-              >
-                <Trash2 size={14} />
-              </button>
+              <div className="absolute top-2 right-2 flex gap-1 items-center">
+                <button onClick={() => onMoveItem('experience', idx, 'up')} className="p-1 text-gray-400 hover:text-blue-500 disabled:opacity-30" disabled={idx === 0}><ChevronUp size={14}/></button>
+                <button onClick={() => onMoveItem('experience', idx, 'down')} className="p-1 text-gray-400 hover:text-blue-500 disabled:opacity-30" disabled={idx === data.experience.length - 1}><ChevronDown size={14}/></button>
+                <button 
+                  onClick={() => removeItem('experience', idx)}
+                  className="p-1 text-gray-400 hover:text-red-500 ml-1"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
               <input 
                 value={exp.role} 
                 onChange={(e) => updateItem('experience', idx, 'role', e.target.value)}
@@ -169,12 +204,16 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange }) => {
         <div className="space-y-4">
           {data.education.map((edu, idx) => (
             <div key={idx} className="bg-gray-50 p-3 rounded border relative">
-              <button 
-                onClick={() => removeItem('education', idx)}
-                className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-              >
-                <Trash2 size={14} />
-              </button>
+              <div className="absolute top-2 right-2 flex gap-1 items-center">
+                <button onClick={() => onMoveItem('education', idx, 'up')} className="p-1 text-gray-400 hover:text-blue-500 disabled:opacity-30" disabled={idx === 0}><ChevronUp size={14}/></button>
+                <button onClick={() => onMoveItem('education', idx, 'down')} className="p-1 text-gray-400 hover:text-blue-500 disabled:opacity-30" disabled={idx === data.education.length - 1}><ChevronDown size={14}/></button>
+                <button 
+                  onClick={() => removeItem('education', idx)}
+                  className="p-1 text-gray-400 hover:text-red-500 ml-1"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
               <input 
                 value={edu.degree} 
                 onChange={(e) => updateItem('education', idx, 'degree', e.target.value)}
@@ -212,12 +251,16 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange }) => {
         <div className="space-y-4">
           {data.courses.map((course, idx) => (
             <div key={idx} className="bg-gray-50 p-3 rounded border relative">
-              <button 
-                onClick={() => removeItem('courses', idx)}
-                className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-              >
-                <Trash2 size={14} />
-              </button>
+              <div className="absolute top-2 right-2 flex gap-1 items-center">
+                <button onClick={() => onMoveItem('courses', idx, 'up')} className="p-1 text-gray-400 hover:text-blue-500 disabled:opacity-30" disabled={idx === 0}><ChevronUp size={14}/></button>
+                <button onClick={() => onMoveItem('courses', idx, 'down')} className="p-1 text-gray-400 hover:text-blue-500 disabled:opacity-30" disabled={idx === data.courses.length - 1}><ChevronDown size={14}/></button>
+                <button 
+                  onClick={() => removeItem('courses', idx)}
+                  className="p-1 text-gray-400 hover:text-red-500 ml-1"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
               <input 
                 value={course.title} 
                 onChange={(e) => updateItem('courses', idx, 'title', e.target.value)}
@@ -257,37 +300,52 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange }) => {
         <div className="space-y-4">
           {data.languages.map((lang, idx) => (
             <div key={idx} className="bg-gray-50 p-3 rounded border relative">
-              <button 
-                onClick={() => removeItem('languages', idx)}
-                className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-              >
-                <Trash2 size={14} />
-              </button>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="absolute top-2 right-2 flex gap-1 items-center border-b pb-1 mb-2">
+                <button onClick={() => onMoveItem('languages', idx, 'up')} className="p-1 text-gray-400 hover:text-blue-500 disabled:opacity-30" disabled={idx === 0}><ChevronUp size={14}/></button>
+                <button onClick={() => onMoveItem('languages', idx, 'down')} className="p-1 text-gray-400 hover:text-blue-500 disabled:opacity-30" disabled={idx === data.languages.length - 1}><ChevronDown size={14}/></button>
+                <button 
+                  onClick={() => removeItem('languages', idx)}
+                  className="p-1 text-gray-400 hover:text-red-500 ml-1"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-6">
                 <input 
                   value={lang.language} 
                   onChange={(e) => updateItem('languages', idx, 'language', e.target.value)}
                   className="w-full bg-transparent font-bold text-sm focus:bg-white focus:outline-none"
                   placeholder="Idioma"
                 />
-                <input 
+                <select 
                   value={lang.level} 
                   onChange={(e) => updateItem('languages', idx, 'level', e.target.value)}
-                  className="w-full bg-transparent text-xs text-gray-600 focus:bg-white focus:outline-none"
-                  placeholder="Nivel (Ej: Nativo)"
-                />
+                  className="w-full bg-transparent text-xs text-gray-600 focus:bg-white focus:outline-none border-0 p-0"
+                >
+                  <option value="Básico">Básico</option>
+                  <option value="Intermedio">Intermedio</option>
+                  <option value="Avanzado">Avanzado</option>
+                  <option value="Experto">Experto</option>
+                  <option value="Nativo">Nativo</option>
+                </select>
               </div>
-              <div className="mt-2 flex items-center gap-2">
-                <label className="text-[10px] text-gray-400 uppercase font-bold">Puntaje</label>
-                <input 
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={lang.score} 
-                  onChange={(e) => updateItem('languages', idx, 'score', parseInt(e.target.value))}
-                  className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                />
-                <span className="text-[10px] font-mono text-gray-500 w-8">{lang.score}%</span>
+              <div className="mt-2 space-y-1">
+                <label className="text-[10px] text-gray-400 uppercase font-bold">Escala (1-5)</label>
+                <div className="flex gap-1 justify-between">
+                  {[1, 2, 3, 4, 5].map((val) => (
+                    <button
+                      key={val}
+                      onClick={() => updateItem('languages', idx, 'score', val * 20)}
+                      className={`flex-1 h-6 rounded text-[10px] font-bold transition ${
+                        (lang.score / 20) === val 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-white border border-gray-200 text-gray-400'
+                      }`}
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           ))}

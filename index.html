@@ -19,25 +19,34 @@
     <style>
       @media print {
         @page {
+          size: letter;
           margin: 0;
-          size: Letter portrait;
         }
-        html, body {
-          margin: 0 !important;
-          padding: 0 !important;
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
-          width: 215.9mm;
-          height: 279.4mm;
+        body {
+          margin: 0;
+          padding: 0;
+          background: white !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
         }
-        #root {
-          margin: 0 !important;
-          padding: 0 !important;
-        }
-        /* Hide UI elements during print */
-        aside, button, .print-hidden {
+        .print\:hidden {
           display: none !important;
         }
+        #resume-content {
+          margin: 0 !important;
+          box-shadow: none !important;
+          width: 215.9mm !important;
+          height: 279.4mm !important;
+          position: absolute;
+          top: 0;
+          left: 0;
+          transform: none !important;
+        }
+      }
+      
+      /* Ocultar barra de desplazamiento en la previsualización */
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
       }
     </style>
   </head>
