@@ -7,7 +7,10 @@ export const INITIAL_DATA: ResumeData = {
   contact: {
     email: "lorem.ipsum@example.com",
     phone: "+00 123 456 789",
-    location: "Lorem Ipsum Street, City, Country"
+    location: "Lorem Ipsum Street, City, Country",
+    website: "https://example.com",
+    linkedin: "",
+    github: ""
   },
   education: [
     {
@@ -83,5 +86,18 @@ export const INITIAL_DATA: ResumeData = {
     contact: 9,
     sectionHeaders: 14,
     content: 12
+  },
+  visualSettings: {
+    primaryColor: '#651d3b',
+    accentColor: '#b3b3b3',
+    contactBarColor: '#30101d',
+    textColor: '#374151',
+    fontSize: 'base'
+  },
+  sectionOrder: ['experience', 'education', 'skills', 'courses', 'languages', 'interests'],
+  hiddenSections: [],
+  columnLayout: {
+    left: ['experience', 'education'],
+    right: ['skills', 'courses', 'languages', 'interests']
   }
 };

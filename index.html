@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
+        darkMode: 'class',
         theme: {
           extend: {
             screens: {
@@ -29,6 +30,10 @@
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
         .print\:hidden {
           display: none !important;
         }
@@ -44,9 +49,26 @@
         }
       }
       
-      /* Ocultar barra de desplazamiento en la previsualización */
-      .scrollbar-hide::-webkit-scrollbar {
+      /* Ocultar barras de desplazamiento en toda la app */
+      * {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      *::-webkit-scrollbar {
         display: none;
+      }
+
+      /* Evitar scrolls en campos editables */
+      [contenteditable] {
+        overflow-y: hidden !important;
+        overflow-x: hidden !important;
+      }
+
+      @media print {
+        [contenteditable] {
+          outline: none !important;
+          box-shadow: none !important;
+        }
       }
     </style>
   </head>

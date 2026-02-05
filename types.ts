@@ -23,10 +23,15 @@ export interface ResumeData {
   name: string;
   title: string;
   summary: string;
+  profileImage?: string;
+  hideProfileImage?: boolean;
   contact: {
     email: string;
     phone: string;
     location: string;
+    website?: string;
+    linkedin?: string;
+    github?: string;
   };
   education: EducationItem[];
   experience: ExperienceItem[];
@@ -41,5 +46,18 @@ export interface ResumeData {
     sectionHeaders: number;
     content: number;
     contact: number;
+  };
+  visualSettings?: {
+    primaryColor: string;
+    accentColor: string;
+    contactBarColor: string;
+    textColor: string;
+    fontSize: 'sm' | 'base' | 'lg';
+  };
+  sectionOrder?: string[];
+  hiddenSections?: string[];
+  columnLayout?: {
+    left: string[];
+    right: string[];
   };
 }

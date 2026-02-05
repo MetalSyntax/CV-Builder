@@ -1,20 +1,18 @@
 import { ResumeData } from '../types';
+import { INITIAL_DATA } from '../constants';
 
 /**
  * Parséador de archivos TXT para CV Builder.
- * Diseñado para procesar exportaciones de texto estructuradas con secciones y bloques líquidos.
+ * Soporta múltiples formatos de archivos TXT, incluyendo detecciones inteligentes de bloques.
  */
 export const parseResumeTxt = (text: string, currentData: ResumeData): ResumeData => {
-  // Dividimos en líneas, limpiamos espacios y eliminamos líneas vacías para el procesamiento secuencial
-  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  const rawLines = text.split(/\r?\n/).map(l => l.trim());
+  const lines = rawLines.filter(l => l.length > 0);
   
-  // Limpiador: elimina tags HTML, guiones iniciales decorativos y espacios extra
-  const clean = (str: string) => str.replace(/<[^>]*>/g, '').replace(/^-+\s*/, '').trim();
+  const clean = (str: string) => str.replace(/<[^>]*>/g, '').replace(/^-+\s*/, '').replace(/\|$/, '').trim();
 
-  // Clonamos el objeto de datos para preservar configuraciones de diseño (colores, etc)
   const newData: ResumeData = JSON.parse(JSON.stringify(currentData));
   
-  // Reiniciamos solo los arreglos de contenido para poblarlos desde el archivo
   newData.education = [];
   newData.experience = [];
   newData.skills = [];
@@ -24,8 +22,8 @@ export const parseResumeTxt = (text: string, currentData: ResumeData): ResumeDat
 
   let currentSection = 'HEADER';
   let tempBlock: string[] = [];
+  let titleFoundInFile = false;
 
-  // Funciones auxiliares para guardar bloques acumulados
   const flushExperience = () => {
     if (tempBlock.length >= 2) {
       newData.experience.push({
@@ -52,12 +50,20 @@ export const parseResumeTxt = (text: string, currentData: ResumeData): ResumeDat
   };
 
   const flushCourses = () => {
-    if (tempBlock.length >= 2) {
-      newData.courses.push({
-        title: clean(tempBlock[0]),
-        date: clean(tempBlock[1] || ''),
-        provider: clean(tempBlock[2] || '')
-      });
+    if (tempBlock.length >= 1) {
+      let title = clean(tempBlock[0]);
+      let date = clean(tempBlock.find(l => l.match(/\d{4}/)) || '');
+      let provider = '';
+      
+      const providerLine = tempBlock.find(l => l.toLowerCase().includes('impartido por') || l.toLowerCase().includes('institución'));
+      if (providerLine) {
+        provider = clean(providerLine.replace(/impartido por:?/i, ''));
+      } else if (tempBlock.length >= 2) {
+        // Si no hay "Impartido por", el segundo suele ser el proveedor en formatos simples
+        provider = clean(tempBlock[1]);
+      }
+
+      newData.courses.push({ title, date, provider });
     }
     tempBlock = [];
   };
@@ -68,47 +74,55 @@ export const parseResumeTxt = (text: string, currentData: ResumeData): ResumeDat
     if (currentSection === 'COURSES') flushCourses();
   };
 
+  const isDivider = (l: string) => l && l.includes('----------------');
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (line.includes('------------------------')) continue;
+    if (isDivider(line)) continue;
+    
     const upper = line.toUpperCase();
+    const rawIdx = rawLines.findIndex((rl, idx) => rl === line && idx >= i); 
+    const hasFollowingDivider = rawLines.slice(rawIdx + 1, rawIdx + 3).some(rl => isDivider(rl));
 
     // Detectores de Cambio de Sección
-    if (upper === 'EDUCACIÓN' || upper === 'EDUCATION') { flushAll(); currentSection = 'EDUCATION'; continue; }
-    if (upper === 'EXPERIENCIA' || upper === 'EXPERIENCE') { flushAll(); currentSection = 'EXPERIENCE'; continue; }
-    if (upper === 'HABILIDADES' || upper === 'SKILLS') { flushAll(); currentSection = 'SKILLS'; continue; }
-    if (upper === 'CURSOS' || upper === 'COURSES') { flushAll(); currentSection = 'COURSES'; continue; }
-    if (upper === 'IDIOMAS' || upper === 'LANGUAGES') { flushAll(); currentSection = 'LANGUAGES'; continue; }
-    if (upper.includes('INTERESES')) { flushAll(); currentSection = 'INTERESTS'; continue; }
+    if (hasFollowingDivider) {
+      if (upper === 'EDUCACIÓN' || upper === 'EDUCATION') { flushAll(); currentSection = 'EDUCATION'; continue; }
+      if (upper === 'EXPERIENCIA' || upper === 'EXPERIENCE') { flushAll(); currentSection = 'EXPERIENCE'; continue; }
+      if (upper === 'HABILIDADES' || upper === 'SKILLS') { flushAll(); currentSection = 'SKILLS'; continue; }
+      if (upper === 'CURSOS' || upper === 'COURSES' || upper.includes('CERTIFICACION')) { flushAll(); currentSection = 'COURSES'; continue; }
+      if (upper === 'IDIOMAS' || upper === 'LANGUAGES') { flushAll(); currentSection = 'LANGUAGES'; continue; }
+      if (upper.includes('INTERESES')) { flushAll(); currentSection = 'INTERESTS'; continue; }
+    }
 
     // Lógica por Sección
     if (currentSection === 'HEADER') {
-      // El nombre suele ser la primera línea real
       if (i === 0) {
         newData.name = clean(line);
       } else if (line.includes('@')) {
         newData.contact.email = clean(line);
       } else if (line.match(/\+?\d[\d\s-]{7,}/)) {
         newData.contact.phone = clean(line);
-      } else if (line.includes('|')) {
-        newData.title = clean(line);
-      } else if (line.length > 100) { 
-        // Si es muy largo, es el resumen/perfil
+      } else if (line.match(/https?:\/\/[^\s]+/) || line.includes('linktr.ee') || line.includes('linkedin.com') || line.includes('github.com')) {
+        // Capturar primer link como website principal
+        if (!newData.contact.website || newData.contact.website.includes('example.com')) {
+          newData.contact.website = clean(line);
+        }
+      } else if (line.length > 120) { 
         newData.summary = clean(line);
-      } else if (line.includes(',') && line.length < 100) {
-        // Si tiene coma y es corto, suele ser la ubicación/dirección
+      } else if (line.includes(',') && line.length < 100 && !line.includes('|')) {
         newData.contact.location = clean(line);
+      } else if (!titleFoundInFile && line.length < 100) {
+        newData.title = clean(line);
+        titleFoundInFile = true;
       }
     } 
     else if (currentSection === 'EDUCATION') {
-      // Artifactos de 'Cursos' dentro de educación en el ejemplo
       if (upper === 'CURSOS') { flushEducation(); continue; }
       if (tempBlock.length >= 4) flushEducation();
       tempBlock.push(line);
     }
     else if (currentSection === 'EXPERIENCE') {
-      if (upper === 'LOGROS/TAREAS' || line.includes('Logros/Tareas')) continue;
-      // Detectamos inicio de nuevo cargo: no empieza con guión y ya tenemos datos del anterior
+      if (upper === 'LOGROS/TAREAS' || upper === 'TAREAS / LOGROS' || line.includes('Logros/Tareas')) continue;
       if (!line.startsWith('-') && tempBlock.length >= 4) flushExperience();
       tempBlock.push(line);
     }
@@ -116,11 +130,22 @@ export const parseResumeTxt = (text: string, currentData: ResumeData): ResumeDat
       newData.skills.push(clean(line));
     }
     else if (currentSection === 'COURSES') {
-      if (tempBlock.length >= 3) flushCourses();
-      tempBlock.push(line);
+      const isSingleLine = line.includes('(') && (line.includes('–') || line.includes('-') || line.includes('—'));
+      if (isSingleLine) {
+        const courseMatch = line.match(/^([^(–-]+)(?:\(([^)]+)\))?\s*[-–—]?\s*(.*)$/);
+        if (courseMatch) {
+           newData.courses.push({
+             title: clean(courseMatch[1]),
+             provider: clean(courseMatch[2] || ''),
+             date: clean(courseMatch[3] || '')
+           });
+        }
+      } else {
+        if (tempBlock.length >= 3) flushCourses();
+        tempBlock.push(line);
+      }
     }
     else if (currentSection === 'LANGUAGES') {
-      // Formato: -Español- (100/100)
       const m = line.match(/-?([^-]+)-?\s*\((\d+)\/(\d+)\)/);
       if (m) {
         const score = (parseInt(m[2]) / parseInt(m[3])) * 100;
@@ -136,8 +161,6 @@ export const parseResumeTxt = (text: string, currentData: ResumeData): ResumeDat
     }
   }
 
-  // Limpieza final de bloques pendientes
   flushAll();
-
   return newData;
 };
