@@ -182,6 +182,7 @@ const App: React.FC = () => {
   
   const imageInputRef = useRef<HTMLInputElement>(null);
   const txtInputRef = useRef<HTMLInputElement>(null);
+  const jsonInputRef = useRef<HTMLInputElement>(null);
 
   const [isExporting, setIsExporting] = useState(false);
 
@@ -314,6 +315,51 @@ const App: React.FC = () => {
       dup.data = JSON.parse(JSON.stringify(source.data));
       await saveResume(dup);
       setAllResumes(prev => [...prev, dup]);
+    }
+  };
+
+  const handleExportJSON = () => {
+    const backup = {
+      version: '1.0',
+      timestamp: Date.now(),
+      resumes: allResumes
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `CV_Builder_Backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportJSON = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const content = JSON.parse(e.target?.result as string);
+          if (content && Array.isArray(content.resumes)) {
+            if (window.confirm(`Se importarán ${content.resumes.length} CVs. ¿Deseas continuar?`)) {
+              for (const resume of content.resumes) {
+                // Ensure unique IDs for imported resumes if they collide, 
+                // but usually backups are for restoration. 
+                // We'll keep IDs but update updatedAt.
+                await saveResume(resume);
+              }
+              const updated = await getAllResumes();
+              setAllResumes(updated);
+              alert('Importación completada con éxito.');
+            }
+          } else {
+            alert('El archivo JSON no tiene un formato válido.');
+          }
+        } catch (err) {
+          alert('Error al leer el archivo JSON.');
+        }
+      };
+      reader.readAsText(file);
     }
   };
 
@@ -466,7 +512,7 @@ const App: React.FC = () => {
                           <div className="w-full h-3" style={{ backgroundColor: theme.primary }}></div>
                           <div className="w-full h-1.5" style={{ backgroundColor: theme.contact }}></div>
                         </div>
-                        <span className={`text-[10px] font-bold truncate ${isSelected ? 'text-white' : 'text-gray-500 dark:text-zinc-400'} group-hover:text-teal-600 dark:group-hover:text-teal-400`}>
+                        <span className={`text-[10px] font-bold ${isSelected ? 'text-white' : 'text-gray-500 dark:text-zinc-400'} group-hover:text-teal-600 dark:group-hover:text-teal-400`}>
                           {theme.name}
                         </span>
                         {isSelected && (
@@ -557,7 +603,7 @@ const App: React.FC = () => {
                       }`}
                     >
                       <div className="flex flex-col min-w-0">
-                        <span className={`text-xs font-bold truncate ${currentId === res.id ? 'text-teal-600 dark:text-teal-400' : 'text-gray-700 dark:text-zinc-300'}`}>
+                        <span className={`text-xs font-bold ${currentId === res.id ? 'text-teal-600 dark:text-teal-400' : 'text-gray-700 dark:text-zinc-300'}`}>
                           {res.name}
                         </span>
                         <span className="text-[9px] text-gray-400 dark:text-zinc-500 uppercase font-bold tracking-tighter">
@@ -619,6 +665,37 @@ const App: React.FC = () => {
                   accept=".txt" 
                   className="hidden"
                 />
+              </div>
+
+              {/* Backup JSON */}
+              <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
+                <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400">
+                  <Download size={18} />
+                  <h3 className="font-bold text-sm uppercase tracking-wider">Copia de Seguridad</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button 
+                    onClick={handleExportJSON}
+                    className="flex items-center justify-center gap-2 py-2.5 px-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-teal-500 hover:text-white rounded-xl transition text-[10px] font-black uppercase tracking-widest border border-gray-200 dark:border-zinc-700"
+                  >
+                    <Download size={14} />
+                    Exportar JSON
+                  </button>
+                  <button 
+                    onClick={() => jsonInputRef.current?.click()}
+                    className="flex items-center justify-center gap-2 py-2.5 px-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-teal-500 hover:text-white rounded-xl transition text-[10px] font-black uppercase tracking-widest border border-gray-200 dark:border-zinc-700"
+                  >
+                    <Upload size={14} />
+                    Importar JSON
+                  </button>
+                  <input 
+                    type="file" 
+                    ref={jsonInputRef} 
+                    onChange={handleImportJSON}
+                    accept=".json" 
+                    className="hidden"
+                  />
+                </div>
               </div>
 
               <ContentEditor 

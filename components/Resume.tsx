@@ -464,7 +464,7 @@ const Resume: React.FC<ResumeProps> = ({
                     printColorAdjust: 'exact',
                     fontSize: `${fontSizes.content * 0.8}px`
                   }}
-                  className="bg-white border border-gray-400 rounded-[5px] px-3 py-1 font-bold text-gray-900 shadow-none whitespace-nowrap opacity-100"
+                  className="bg-white border border-gray-400 rounded-[5px] px-3 py-1 font-bold text-gray-900 shadow-none whitespace-nowrap opacity-100 mr-1"
                   value={interest}
                   onFocus={(el) => handleFocus(el, 'content')}
                   onChange={(val) => {
@@ -560,7 +560,7 @@ const Resume: React.FC<ResumeProps> = ({
         style={{ backgroundColor: primaryColor }} 
         className="text-white p-8 flex flex-col justify-end relative shadow-inner"
       >
-        <div className="flex items-start gap-12">
+        <div className="flex items-center justify-between gap-10">
           <div className="flex-1">
             {data.name.trim() && (
               <EditableText 
@@ -586,7 +586,7 @@ const Resume: React.FC<ResumeProps> = ({
               <EditableText 
                 tagName="p"
                 style={{ fontSize: `${fontSizes.summary}px` }}
-                className={`leading-tight opacity-95 text-justify ${(!profileImage && !data.profileImage) || data.hideProfileImage ? 'w-full' : 'max-w-2xl'}`}
+                className="leading-tight opacity-95 text-justify w-full"
                 value={data.summary}
                 multiline
                 onFocus={(el) => handleFocus(el, 'summary')}
@@ -594,18 +594,18 @@ const Resume: React.FC<ResumeProps> = ({
               />
             )}
           </div>
+
+          {/* Profile Image */}
+          {(profileImage || data.profileImage) && !data.hideProfileImage && (
+            <div className="w-36 h-36 rounded-full border-[6px] border-white/20 overflow-hidden bg-gray-200 shrink-0 shadow-xl z-10">
+              <img 
+                src={data.profileImage || profileImage} 
+                alt={data.name} 
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
         </div>
-        
-        {/* Profile Image */}
-        {(profileImage || data.profileImage) && !data.hideProfileImage && (
-          <div className="w-36 h-36 rounded-full border-[6px] border-white/20 overflow-hidden bg-gray-200 shrink-0 shadow-xl absolute right-12 top-6 z-10">
-            <img 
-              src={data.profileImage || profileImage} 
-              alt={data.name} 
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
       </header>
 
       {/* Contact Bar */}
@@ -642,7 +642,7 @@ const Resume: React.FC<ResumeProps> = ({
               value={data.contact.location}
               onFocus={(el) => handleFocus(el, 'contact')}
               onChange={(val) => onChange({ ...data, contact: { ...data.contact, location: val } })}
-              className="min-w-[50px] max-w-[200px] truncate"
+              className="min-w-[50px] max-w-[300px]"
             />
           </div>
         )}

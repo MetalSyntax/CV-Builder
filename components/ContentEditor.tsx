@@ -169,7 +169,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange, onMoveIte
           <div className={`p-1.5 rounded-lg ${isHidden ? 'bg-gray-200 dark:bg-zinc-800' : 'bg-teal-500/10 text-teal-600 dark:text-teal-400'}`}>
             <Icon size={12} />
           </div>
-          <span className="text-[10px] font-bold text-gray-700 dark:text-zinc-300 truncate max-w-[80px]">{config.label}</span>
+          <span className="text-[10px] font-bold text-gray-700 dark:text-zinc-300 max-w-[100px]">{config.label}</span>
         </div>
 
         <div className="flex items-center gap-0.5">
