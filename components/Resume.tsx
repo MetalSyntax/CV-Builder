@@ -44,12 +44,12 @@ const EditableText: React.FC<{
   );
 };
 
-const Resume: React.FC<ResumeProps> = ({ 
-  data, 
-  primaryColor, 
-  accentColor, 
+const Resume: React.FC<ResumeProps> = ({
+  data,
+  primaryColor,
+  accentColor,
   contactBarColor,
-  textColor, 
+  textColor,
   fontSize,
   profileImage,
   onChange
@@ -70,10 +70,10 @@ const Resume: React.FC<ResumeProps> = ({
     const rect = el.getBoundingClientRect();
     const containerEl = document.getElementById('resume-content');
     const containerRect = containerEl?.getBoundingClientRect();
-    
+
     if (containerRect) {
       const currentScale = fontSize === 'sm' ? 0.9 : fontSize === 'lg' ? 1.05 : 1;
-      
+
       setToolbarState({
         show: true,
         top: (rect.top - containerRect.top) / currentScale - 45,
@@ -103,7 +103,7 @@ const Resume: React.FC<ResumeProps> = ({
 
   const renderEducation = () => (
     <section key="education" className="section-container">
-      <h2 
+      <h2
         style={{ fontSize: `${fontSizes.sectionHeaders}px`, color: accentColor }}
         className="font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100"
       >
@@ -117,7 +117,7 @@ const Resume: React.FC<ResumeProps> = ({
           return (
             <div key={index}>
               {edu.degree.trim() && (
-                <EditableText 
+                <EditableText
                   tagName="h3"
                   style={{ fontSize: `${fontSizes.content}px` }}
                   className="font-bold leading-tight text-gray-900"
@@ -131,7 +131,7 @@ const Resume: React.FC<ResumeProps> = ({
                 />
               )}
               {edu.institution.trim() && (
-                <EditableText 
+                <EditableText
                   style={{ fontSize: `${fontSizes.content}px` }}
                   className="font-bold text-gray-700 leading-tight opacity-90"
                   value={edu.institution}
@@ -145,7 +145,7 @@ const Resume: React.FC<ResumeProps> = ({
               )}
               <div className="flex justify-between text-gray-400 mt-0.5 opacity-80" style={{ fontSize: `${fontSizes.content * 0.85}px` }}>
                 {edu.period.trim() && (
-                  <EditableText 
+                  <EditableText
                     value={edu.period}
                     onFocus={(el) => handleFocus(el, 'content')}
                     onChange={(val) => {
@@ -156,7 +156,7 @@ const Resume: React.FC<ResumeProps> = ({
                   />
                 )}
                 {edu.location.trim() && (
-                  <EditableText 
+                  <EditableText
                     className="italic"
                     value={edu.location}
                     onFocus={(el) => handleFocus(el, 'content')}
@@ -177,7 +177,7 @@ const Resume: React.FC<ResumeProps> = ({
 
   const renderExperience = () => (
     <section key="experience" className="section-container">
-      <h2 
+      <h2
         style={{ fontSize: `${fontSizes.sectionHeaders}px`, color: accentColor }}
         className="font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100"
       >
@@ -191,7 +191,7 @@ const Resume: React.FC<ResumeProps> = ({
           return (
             <div key={index}>
               {exp.role.trim() && (
-                <EditableText 
+                <EditableText
                   tagName="h3"
                   style={{ fontSize: `${fontSizes.content}px` }}
                   className="font-bold leading-tight text-gray-900"
@@ -205,7 +205,7 @@ const Resume: React.FC<ResumeProps> = ({
                 />
               )}
               {exp.company.trim() && (
-                <EditableText 
+                <EditableText
                   style={{ fontSize: `${fontSizes.content}px` }}
                   className="font-bold text-gray-700 leading-tight opacity-90"
                   value={exp.company}
@@ -219,7 +219,7 @@ const Resume: React.FC<ResumeProps> = ({
               )}
               <div className="flex justify-between text-gray-400 mt-0.5 opacity-80" style={{ fontSize: `${fontSizes.content * 0.85}px` }}>
                 {exp.period.trim() && (
-                  <EditableText 
+                  <EditableText
                     value={exp.period}
                     onFocus={(el) => handleFocus(el, 'content')}
                     onChange={(val) => {
@@ -230,7 +230,7 @@ const Resume: React.FC<ResumeProps> = ({
                   />
                 )}
                 {exp.location.trim() && (
-                  <EditableText 
+                  <EditableText
                     className="italic"
                     value={exp.location}
                     onFocus={(el) => handleFocus(el, 'content')}
@@ -248,7 +248,7 @@ const Resume: React.FC<ResumeProps> = ({
                     if (!task.trim()) return null;
                     return (
                       <li key={i} className="pl-1 leading-tight">
-                        <EditableText 
+                        <EditableText
                           tagName="span"
                           style={{ fontSize: `${fontSizes.content}px` }}
                           className="relative -left-1 leading-tight"
@@ -280,7 +280,7 @@ const Resume: React.FC<ResumeProps> = ({
 
     return (
       <section key="skills" className="section-container">
-        <h2 
+        <h2
           style={{ fontSize: `${fontSizes.sectionHeaders}px`, color: accentColor }}
           className="font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100"
         >
@@ -290,10 +290,10 @@ const Resume: React.FC<ResumeProps> = ({
           {data.skills.map((skill, index) => {
             if (!skill.trim()) return null;
             return (
-              <EditableText 
+              <EditableText
                 tagName="span"
                 key={index}
-                style={{ 
+                style={{
                   backgroundColor: primaryColor,
                   WebkitPrintColorAdjust: 'exact',
                   printColorAdjust: 'exact',
@@ -317,7 +317,7 @@ const Resume: React.FC<ResumeProps> = ({
 
   const renderCourses = () => (
     <section key="courses" className="section-container">
-      <h2 
+      <h2
         style={{ fontSize: `${fontSizes.sectionHeaders}px`, color: accentColor }}
         className="font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100"
       >
@@ -332,7 +332,7 @@ const Resume: React.FC<ResumeProps> = ({
             <div key={index}>
               <div className="flex gap-1 font-bold leading-tight text-gray-800" style={{ fontSize: `${fontSizes.content}px` }}>
                 {course.title.trim() && (
-                  <EditableText 
+                  <EditableText
                     value={course.title}
                     onFocus={(el) => handleFocus(el, 'content')}
                     onChange={(val) => {
@@ -345,7 +345,7 @@ const Resume: React.FC<ResumeProps> = ({
                 {course.date && course.date.trim() !== '' && (
                   <>
                     <span className="ml-1 opacity-70">(</span>
-                    <EditableText 
+                    <EditableText
                       value={course.date}
                       onFocus={(el) => handleFocus(el, 'content')}
                       onChange={(val) => {
@@ -361,7 +361,7 @@ const Resume: React.FC<ResumeProps> = ({
               {course.provider && course.provider.trim() !== '' && (
                 <div className="text-gray-400 italic font-medium opacity-80 flex gap-1" style={{ fontSize: `${fontSizes.content * 0.85}px` }}>
                   <span>Impartido por:</span>
-                  <EditableText 
+                  <EditableText
                     value={course.provider}
                     onFocus={(el) => handleFocus(el, 'content')}
                     onChange={(val) => {
@@ -381,7 +381,7 @@ const Resume: React.FC<ResumeProps> = ({
 
   const renderLanguages = () => (
     <section key="languages" className="section-container">
-      <h2 
+      <h2
         style={{ fontSize: `${fontSizes.sectionHeaders}px`, color: accentColor }}
         className="font-bold uppercase tracking-[0.15em] mb-2 border-b-2 border-gray-100"
       >
@@ -394,7 +394,7 @@ const Resume: React.FC<ResumeProps> = ({
           return (
             <div key={index} className="flex flex-col">
               <div className="flex items-center justify-between gap-2 overflow-hidden">
-                <EditableText 
+                <EditableText
                   style={{ fontSize: `${fontSizes.content}px` }}
                   className="font-bold text-gray-800 leading-tight shrink-0"
                   value={lang.language}
@@ -408,8 +408,8 @@ const Resume: React.FC<ResumeProps> = ({
                 <div className="flex-1 border-b border-dotted border-gray-300 mb-1 opacity-50"></div>
                 <div className="flex items-center gap-0.5 shrink-0">
                   {[1, 2, 3, 4, 5].map((dot) => (
-                    <div 
-                      key={dot} 
+                    <div
+                      key={dot}
                       className={`w-1.5 h-1.5 rounded-full cursor-pointer hover:scale-125 transition-transform ${dot <= dots ? '' : 'bg-gray-200'}`}
                       style={dot <= dots ? { backgroundColor: accentColor } : {}}
                       onClick={() => {
@@ -422,9 +422,9 @@ const Resume: React.FC<ResumeProps> = ({
                 </div>
               </div>
               {lang.level.trim() && (
-                <EditableText 
+                <EditableText
                   style={{ fontSize: `${fontSizes.content * 0.85}px` }}
-                  className="text-gray-400 italic font-medium mt-0.5 leading-tight opacity-80" 
+                  className="text-gray-400 italic font-medium mt-0.5 leading-tight opacity-80"
                   value={lang.level}
                   onFocus={(el) => handleFocus(el, 'content')}
                   onChange={(val) => {
@@ -447,34 +447,34 @@ const Resume: React.FC<ResumeProps> = ({
 
     return (
       <section key="interests" className="section-container">
-        <h2 
+        <h2
           style={{ fontSize: `${fontSizes.sectionHeaders}px`, color: accentColor }}
           className="font-bold uppercase tracking-[0.15em] mb-3 border-b-2 border-gray-100"
         >
           INTERESES
         </h2>
         <div className="flex flex-wrap gap-2">
-            {data.interests.map((interest, i) => {
-              if (!interest.trim()) return null;
-              return (
-                <EditableText 
-                  key={i} 
-                  style={{ 
-                    WebkitPrintColorAdjust: 'exact',
-                    printColorAdjust: 'exact',
-                    fontSize: `${fontSizes.content * 0.8}px`
-                  }}
-                  className="bg-white border border-gray-400 rounded-[5px] px-3 py-1 font-bold text-gray-900 shadow-none whitespace-nowrap opacity-100 mr-1"
-                  value={interest}
-                  onFocus={(el) => handleFocus(el, 'content')}
-                  onChange={(val) => {
-                    const newList = [...data.interests];
-                    newList[i] = val;
-                    onChange({ ...data, interests: newList });
-                  }}
-                />
-              );
-            })}
+          {data.interests.map((interest, i) => {
+            if (!interest.trim()) return null;
+            return (
+              <EditableText
+                key={i}
+                style={{
+                  WebkitPrintColorAdjust: 'exact',
+                  printColorAdjust: 'exact',
+                  fontSize: `${fontSizes.content * 0.8}px`
+                }}
+                className="bg-white border border-gray-400 rounded-[5px] px-3 py-1 font-bold text-gray-900 shadow-none whitespace-nowrap opacity-100 mr-1"
+                value={interest}
+                onFocus={(el) => handleFocus(el, 'content')}
+                onChange={(val) => {
+                  const newList = [...data.interests];
+                  newList[i] = val;
+                  onChange({ ...data, interests: newList });
+                }}
+              />
+            );
+          })}
         </div>
       </section>
     );
@@ -489,9 +489,9 @@ const Resume: React.FC<ResumeProps> = ({
     interests: renderInterests
   };
 
-  const layout = data.columnLayout || { 
-    left: ['experience', 'education'], 
-    right: ['skills', 'courses', 'languages', 'interests'] 
+  const layout = data.columnLayout || {
+    left: ['experience', 'education'],
+    right: ['skills', 'courses', 'languages', 'interests']
   };
 
   const hidden = data.hiddenSections || [];
@@ -499,10 +499,10 @@ const Resume: React.FC<ResumeProps> = ({
   const rightSections = layout.right.filter(s => !hidden.includes(s));
 
   return (
-    <div 
+    <div
       id="resume-content"
       className={`bg-white shadow-2xl mx-auto flex flex-col items-stretch overflow-hidden relative font-sans shrink-0 ${fontSize === 'sm' ? 'scale-90 origin-top' : fontSize === 'lg' ? 'scale-105 origin-top' : ''}`}
-      style={{ 
+      style={{
         color: textColor,
         width: '816px',
         height: '1056px',
@@ -512,58 +512,58 @@ const Resume: React.FC<ResumeProps> = ({
     >
       {/* Dynamic Toolbar */}
       {toolbarState.show && (
-        <div 
+        <div
           className="absolute z-50 flex items-center bg-zinc-900 text-white rounded-lg shadow-2xl p-1 border border-white/10"
           style={{ top: toolbarState.top, left: toolbarState.left }}
         >
-          <button 
+          <button
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => execCommand('bold')} 
+            onClick={() => execCommand('bold')}
             className="p-2 hover:bg-white/10 rounded"
           >
-            <Bold size={14}/>
+            <Bold size={14} />
           </button>
-          <button 
+          <button
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => execCommand('italic')} 
+            onClick={() => execCommand('italic')}
             className="p-2 hover:bg-white/10 rounded"
           >
-            <Italic size={14}/>
+            <Italic size={14} />
           </button>
           <div className="w-px h-4 bg-white/20 mx-1" />
-          <button 
+          <button
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => updateFontSize(-1)} 
+            onClick={() => updateFontSize(-1)}
             className="p-2 hover:bg-white/10 rounded px-3 text-[10px]"
           >
             A-
           </button>
-          <button 
+          <button
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => updateFontSize(1)} 
+            onClick={() => updateFontSize(1)}
             className="p-2 hover:bg-white/10 rounded px-3 text-[10px]"
           >
             A+
           </button>
-          <button 
+          <button
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => setToolbarState(prev => ({...prev, show: false}))} 
+            onClick={() => setToolbarState(prev => ({ ...prev, show: false }))}
             className="p-2 hover:bg-white/10 rounded ml-2"
           >
-            <Type size={14}/>
+            <Type size={14} />
           </button>
         </div>
       )}
 
       {/* Header */}
-      <header 
-        style={{ backgroundColor: primaryColor }} 
+      <header
+        style={{ backgroundColor: primaryColor }}
         className="text-white p-8 flex flex-col justify-end relative shadow-inner"
       >
         <div className="flex items-center justify-between gap-10">
           <div className="flex-1">
             {data.name.trim() && (
-              <EditableText 
+              <EditableText
                 tagName="h1"
                 style={{ fontSize: `${fontSizes.name}px` }}
                 className="font-black tracking-tighter leading-none mb-1 uppercase"
@@ -573,7 +573,7 @@ const Resume: React.FC<ResumeProps> = ({
               />
             )}
             {data.title.trim() && (
-              <EditableText 
+              <EditableText
                 tagName="p"
                 style={{ fontSize: `${fontSizes.title}px` }}
                 className="opacity-90 mb-3 font-medium"
@@ -583,7 +583,7 @@ const Resume: React.FC<ResumeProps> = ({
               />
             )}
             {data.summary.trim() && (
-              <EditableText 
+              <EditableText
                 tagName="p"
                 style={{ fontSize: `${fontSizes.summary}px` }}
                 className="leading-tight opacity-95 text-justify w-full"
@@ -598,9 +598,9 @@ const Resume: React.FC<ResumeProps> = ({
           {/* Profile Image */}
           {(profileImage || data.profileImage) && !data.hideProfileImage && (
             <div className="w-36 h-36 rounded-full border-[6px] border-white/20 overflow-hidden bg-gray-200 shrink-0 shadow-xl z-10">
-              <img 
-                src={data.profileImage || profileImage} 
-                alt={data.name} 
+              <img
+                src={data.profileImage || profileImage}
+                alt={data.name}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -609,14 +609,14 @@ const Resume: React.FC<ResumeProps> = ({
       </header>
 
       {/* Contact Bar */}
-      <div 
-        style={{ backgroundColor: contactBarColor, fontSize: `${fontSizes.contact}px` }} 
+      <div
+        style={{ backgroundColor: contactBarColor, fontSize: `${fontSizes.contact}px` }}
         className="text-white py-1.5 px-10 flex gap-6 items-center justify-around print:no-links"
       >
         {data.contact.email.trim() && (
           <div className="flex items-center gap-1.5 overflow-hidden">
             <Mail size={fontSizes.contact + 2} className="text-white opacity-90 flex-shrink-0" />
-            <EditableText 
+            <EditableText
               value={data.contact.email}
               onFocus={(el) => handleFocus(el, 'contact')}
               onChange={(val) => onChange({ ...data, contact: { ...data.contact, email: val } })}
@@ -627,7 +627,7 @@ const Resume: React.FC<ResumeProps> = ({
         {data.contact.phone.trim() && (
           <div className="flex items-center gap-1.5 overflow-hidden">
             <Phone size={fontSizes.contact + 2} className="text-white opacity-90 flex-shrink-0" />
-            <EditableText 
+            <EditableText
               value={data.contact.phone}
               onFocus={(el) => handleFocus(el, 'contact')}
               onChange={(val) => onChange({ ...data, contact: { ...data.contact, phone: val } })}
@@ -638,7 +638,7 @@ const Resume: React.FC<ResumeProps> = ({
         {data.contact.location.trim() && (
           <div className="flex items-center gap-1.5 overflow-hidden">
             <MapPin size={fontSizes.contact + 2} className="text-white opacity-90 flex-shrink-0" />
-            <EditableText 
+            <EditableText
               value={data.contact.location}
               onFocus={(el) => handleFocus(el, 'contact')}
               onChange={(val) => onChange({ ...data, contact: { ...data.contact, location: val } })}
@@ -650,7 +650,7 @@ const Resume: React.FC<ResumeProps> = ({
           <div className="flex items-center gap-1.5 overflow-hidden">
             <LinkIcon size={fontSizes.contact + 2} className="text-white opacity-90 flex-shrink-0" />
             <span className="truncate">
-              <EditableText 
+              <EditableText
                 value={data.contact.website}
                 onFocus={(el) => handleFocus(el, 'contact')}
                 onChange={(val) => onChange({ ...data, contact: { ...data.contact, website: val } })}
@@ -663,7 +663,7 @@ const Resume: React.FC<ResumeProps> = ({
           <div className="flex items-center gap-1.5 overflow-hidden">
             <Linkedin size={fontSizes.contact + 2} className="text-white opacity-90 flex-shrink-0" />
             <span className="truncate">
-              <EditableText 
+              <EditableText
                 value={data.contact.linkedin}
                 onFocus={(el) => handleFocus(el, 'contact')}
                 onChange={(val) => onChange({ ...data, contact: { ...data.contact, linkedin: val } })}
@@ -676,7 +676,7 @@ const Resume: React.FC<ResumeProps> = ({
           <div className="flex items-center gap-1.5 overflow-hidden">
             <Github size={fontSizes.contact + 2} className="text-white opacity-90 flex-shrink-0" />
             <span className="truncate">
-              <EditableText 
+              <EditableText
                 value={data.contact.github}
                 onFocus={(el) => handleFocus(el, 'contact')}
                 onChange={(val) => onChange({ ...data, contact: { ...data.contact, github: val } })}
