@@ -193,16 +193,15 @@ const App: React.FC = () => {
     try {
       setIsExporting(true);
       
-      // Optimizamos temporalmente el elemento para la captura
       const originalShadow = element.style.boxShadow;
       element.style.boxShadow = 'none';
 
+      const scale = 3;
       const canvas = await html2canvas(element, {
-        scale: 3, 
+        scale: scale,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        // Evitamos que el scroll actual del navegador desplace la captura
         scrollY: -window.scrollY,
         scrollX: -window.scrollX,
         onclone: (clonedDoc) => {
@@ -211,15 +210,16 @@ const App: React.FC = () => {
             el.style.transform = 'none';
             el.style.margin = '0';
             el.style.boxShadow = 'none';
-            el.style.position = 'fixed';
-            el.style.top = '0';
-            el.style.left = '0';
           }
         }
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
       
+      const pageHeightPx = 1056 * scale;
+      const totalPages = Math.ceil(imgHeight / pageHeightPx);
+
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -230,14 +230,44 @@ const App: React.FC = () => {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      // Ajuste milimétrico para eliminar cualquier borde blanco residual
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) pdf.addPage();
+        
+        const sourceY = i * pageHeightPx;
+        let sourceHeight = pageHeightPx;
+        
+        // El último segmento puede ser más corto
+        if (sourceY + sourceHeight > imgHeight) {
+          sourceHeight = imgHeight - sourceY;
+        }
+
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = imgWidth;
+        pageCanvas.height = pageHeightPx; // Siempre el tamaño de la hoja
+        const ctx = pageCanvas.getContext('2d');
+        
+        if (ctx) {
+          // Pintamos de blanco el fondo de la página nueva
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+          
+          ctx.drawImage(
+            canvas,
+            0, sourceY, imgWidth, sourceHeight,
+            0, 0, imgWidth, sourceHeight
+          );
+        }
+
+        const pageData = pageCanvas.toDataURL('image/jpeg', 1.0);
+        pdf.addImage(pageData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      }
+
       const now = new Date();
       const dateStr = `${now.getDate().toString().padStart(2, '0')}_${(now.getMonth() + 1).toString().padStart(2, '0')}_${now.getFullYear()}`;
       pdf.save(`CV_${resumeData.name.replace(/\s+/g, '_')}_${dateStr}.pdf`);
     } catch (error) {
       console.error('Error generando PDF:', error);
-      alert('Hubo un error al generar el PDF. Por favor intenta usando el botón de imprimir del navegador.');
+      alert('Hubo un error al generar el PDF.');
     } finally {
       setIsExporting(false);
     }
@@ -426,61 +456,63 @@ const App: React.FC = () => {
           {activeTab === 'design' ? (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
               {/* Color Controls */}
-              <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-5">
+              <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400 mb-1">
                   <Palette size={16} />
                   <h3 className="font-bold text-sm uppercase tracking-wider">Configuración Visual</h3>
                 </div>
                 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Fondo Encabezado</label>
-                  <div className="flex items-center gap-3 bg-gray-50 dark:bg-zinc-900 p-2 rounded-xl border border-gray-100 dark:border-zinc-800">
-                    <input 
-                      type="color" 
-                      value={primaryColor} 
-                      onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0 bg-transparent overflow-hidden"
-                    />
-                    <span className="text-xs font-mono text-gray-600 dark:text-zinc-400 bg-white dark:bg-zinc-800 px-2.5 py-1.5 rounded-lg border border-gray-100 dark:border-zinc-700 shadow-sm flex-1">{primaryColor}</span>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Encabezado</label>
+                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900 p-1.5 rounded-xl border border-gray-100 dark:border-zinc-800">
+                      <input 
+                        type="color" 
+                        value={primaryColor} 
+                        onChange={(e) => setPrimaryColor(e.target.value)}
+                        className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0 bg-transparent overflow-hidden"
+                      />
+                      <span className="text-[10px] font-mono text-gray-500 dark:text-zinc-400 truncate">{primaryColor}</span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Títulos Secciones</label>
-                  <div className="flex items-center gap-3 bg-gray-50 dark:bg-zinc-900 p-2 rounded-xl border border-gray-100 dark:border-zinc-800">
-                    <input 
-                      type="color" 
-                      value={accentColor} 
-                      onChange={(e) => setAccentColor(e.target.value)}
-                      className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0 bg-transparent overflow-hidden"
-                    />
-                    <span className="text-xs font-mono text-gray-600 dark:text-zinc-400 bg-white dark:bg-zinc-800 px-2.5 py-1.5 rounded-lg border border-gray-100 dark:border-zinc-700 shadow-sm flex-1">{accentColor}</span>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Secciones</label>
+                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900 p-1.5 rounded-xl border border-gray-100 dark:border-zinc-800">
+                      <input 
+                        type="color" 
+                        value={accentColor} 
+                        onChange={(e) => setAccentColor(e.target.value)}
+                        className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0 bg-transparent overflow-hidden"
+                      />
+                      <span className="text-[10px] font-mono text-gray-500 dark:text-zinc-400 truncate">{accentColor}</span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Barra de Contacto</label>
-                  <div className="flex items-center gap-3 bg-gray-50 dark:bg-zinc-900 p-2 rounded-xl border border-gray-100 dark:border-zinc-800">
-                    <input 
-                      type="color" 
-                      value={contactBarColor} 
-                      onChange={(e) => setContactBarColor(e.target.value)}
-                      className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0 bg-transparent overflow-hidden"
-                    />
-                    <span className="text-xs font-mono text-gray-600 dark:text-zinc-400 bg-white dark:bg-zinc-800 px-2.5 py-1.5 rounded-lg border border-gray-100 dark:border-zinc-700 shadow-sm flex-1">{contactBarColor}</span>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Contacto</label>
+                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900 p-1.5 rounded-xl border border-gray-100 dark:border-zinc-800">
+                      <input 
+                        type="color" 
+                        value={contactBarColor} 
+                        onChange={(e) => setContactBarColor(e.target.value)}
+                        className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0 bg-transparent overflow-hidden"
+                      />
+                      <span className="text-[10px] font-mono text-gray-500 dark:text-zinc-400 truncate">{contactBarColor}</span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Texto Cuerpo</label>
-                  <div className="flex items-center gap-3 bg-gray-50 dark:bg-zinc-900 p-2 rounded-xl border border-gray-100 dark:border-zinc-800">
-                    <input 
-                      type="color" 
-                      value={textColor} 
-                      onChange={(e) => setTextColor(e.target.value)}
-                      className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0 bg-transparent overflow-hidden"
-                    />
-                    <span className="text-xs font-mono text-gray-600 dark:text-zinc-400 bg-white dark:bg-zinc-800 px-2.5 py-1.5 rounded-lg border border-gray-100 dark:border-zinc-700 shadow-sm flex-1">{textColor}</span>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Texto</label>
+                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900 p-1.5 rounded-xl border border-gray-100 dark:border-zinc-800">
+                      <input 
+                        type="color" 
+                        value={textColor} 
+                        onChange={(e) => setTextColor(e.target.value)}
+                        className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0 bg-transparent overflow-hidden"
+                      />
+                      <span className="text-[10px] font-mono text-gray-500 dark:text-zinc-400 truncate">{textColor}</span>
+                    </div>
                   </div>
                 </div>
               </div>

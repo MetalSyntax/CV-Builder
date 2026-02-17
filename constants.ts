@@ -99,5 +99,7 @@ export const INITIAL_DATA: ResumeData = {
   columnLayout: {
     left: ['experience', 'education'],
     right: ['skills', 'courses', 'languages', 'interests']
-  }
+  },
+  columnStyle: 'balanced',
+  sectionStyle: 'modern'
 };

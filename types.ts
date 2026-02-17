@@ -60,4 +60,8 @@ export interface ResumeData {
     left: string[];
     right: string[];
   };
+  columnStyle?: 'balanced' | 'side-left' | 'side-right' | 'single';
+  sectionStyle?: 'modern' | 'classic' | 'elegant';
+  dateFormat?: string;
+  dateRangeSeparator?: string;
 }
