@@ -2,8 +2,6 @@
 
 A premium, state-of-the-art curriculum vitae builder designed for professionals who value both design and efficiency. Create high-end, ATS-ready resumes with real-time preview and intuitive local management.
 
-![CV-Builder Deepmind](https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6)
-
 ## ✨ Core Features
 
 ### 🎨 Visual Customization
