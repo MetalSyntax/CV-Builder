@@ -47,6 +47,10 @@ const App: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [showSavedFeedback, setShowSavedFeedback] = useState(false);
 
+  // Editing Resume Title State
+  const [editingResumeId, setEditingResumeId] = useState<string | null>(null);
+  const [editingResumeName, setEditingResumeName] = useState<string>("");
+
   // Initialize DB and Load Data
   useEffect(() => {
     const loadData = async () => {
@@ -196,7 +200,7 @@ const App: React.FC = () => {
       const originalShadow = element.style.boxShadow;
       element.style.boxShadow = 'none';
 
-      const scale = 3;
+      const scale = 1;
       const canvas = await html2canvas(element, {
         scale: scale,
         useCORS: true,
@@ -210,6 +214,10 @@ const App: React.FC = () => {
             el.style.transform = 'none';
             el.style.margin = '0';
             el.style.boxShadow = 'none';
+            // Hide toolbars and other UI elements for PDF
+            el.querySelectorAll('.print\\:hidden').forEach((node: any) => {
+              node.style.display = 'none';
+            });
           }
         }
       });
@@ -274,8 +282,27 @@ const App: React.FC = () => {
   };
 
   const handlePrint = () => {
+    const originalTitle = document.title;
+    const now = new Date();
+    const day = now.getDate().toString().padStart(2, '0');
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const year = now.getFullYear();
+    const dateStr = `${day}_${month}_${year}`;
+    
+    // Format name: Replace spaces with underscores and remove special characters
+    const cleanName = resumeData.name
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove accents
+      .replace(/\s+/g, '_');
+      
+    document.title = `CV_${cleanName}_${dateStr}`;
     window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
   };
+
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -345,6 +372,35 @@ const App: React.FC = () => {
       dup.data = JSON.parse(JSON.stringify(source.data));
       await saveResume(dup);
       setAllResumes(prev => [...prev, dup]);
+    }
+  };
+
+  const handleStartEditing = (id: string, name: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingResumeId(id);
+    setEditingResumeName(name);
+  };
+
+  const handleUpdateResumeName = async () => {
+    if (!editingResumeId || !editingResumeName.trim()) {
+      setEditingResumeId(null);
+      return;
+    }
+
+    const resumeToUpdate = allResumes.find(r => r.id === editingResumeId);
+    if (resumeToUpdate && resumeToUpdate.name !== editingResumeName) {
+      const updatedRecord = { ...resumeToUpdate, name: editingResumeName };
+      await saveResume(updatedRecord);
+      setAllResumes(prev => prev.map(r => r.id === editingResumeId ? updatedRecord : r));
+    }
+    setEditingResumeId(null);
+  };
+
+  const handleKeyDownEditing = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleUpdateResumeName();
+    } else if (e.key === 'Escape') {
+      setEditingResumeId(null);
     }
   };
 
@@ -477,7 +533,7 @@ const App: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Secciones</label>
+                    <label className="text-[9px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Seccs / Título</label>
                     <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900 p-1.5 rounded-xl border border-gray-100 dark:border-zinc-800">
                       <input 
                         type="color" 
@@ -634,15 +690,40 @@ const App: React.FC = () => {
                           : 'bg-gray-50/50 dark:bg-zinc-950/50 border-gray-100 dark:border-zinc-800 hover:border-teal-500/20'
                       }`}
                     >
-                      <div className="flex flex-col min-w-0">
-                        <span className={`text-xs font-bold ${currentId === res.id ? 'text-teal-600 dark:text-teal-400' : 'text-gray-700 dark:text-zinc-300'}`}>
-                          {res.name}
-                        </span>
+                      <div className="flex flex-col min-w-0 flex-1">
+                        {editingResumeId === res.id ? (
+                          <div className="flex items-center gap-1 w-full mr-2">
+                            <input
+                              autoFocus
+                              type="text"
+                              value={editingResumeName}
+                              onChange={(e) => setEditingResumeName(e.target.value)}
+                              onBlur={handleUpdateResumeName}
+                              onKeyDown={handleKeyDownEditing}
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-xs font-bold bg-white dark:bg-zinc-800 border border-teal-500 rounded-lg px-2 py-1 outline-none w-full text-teal-600 dark:text-teal-400 shadow-sm"
+                            />
+                          </div>
+                        ) : (
+                          <span 
+                            onClick={(e) => handleStartEditing(res.id, res.name, e)}
+                            className={`text-xs font-bold truncate ${currentId === res.id ? 'text-teal-600 dark:text-teal-400' : 'text-gray-700 dark:text-zinc-300'}`}
+                          >
+                            {res.name}
+                          </span>
+                        )}
                         <span className="text-[9px] text-gray-400 dark:text-zinc-500 uppercase font-bold tracking-tighter">
                           Editado: {new Date(res.updatedAt).toLocaleDateString()}
                         </span>
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={(e) => handleStartEditing(res.id, res.name, e)}
+                          className="p-1.5 text-gray-400 hover:text-teal-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm"
+                          title="Renombrar"
+                        >
+                          <Edit3 size={12} />
+                        </button>
                         <button 
                           onClick={(e) => handleDuplicateResume(res.id, e)}
                           className="p-1.5 text-gray-400 hover:text-teal-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm"

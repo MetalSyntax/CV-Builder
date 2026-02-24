@@ -7,6 +7,7 @@ interface ResumeHeaderProps {
   data: ResumeData;
   fontSizes: ResumeData['fontSizes'];
   primaryColor: string;
+  accentColor: string;
   contactBarColor: string;
   profileImage?: string;
   handleFocus: (el: HTMLElement, field: keyof ResumeData['fontSizes']) => void;
@@ -17,6 +18,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
   data,
   fontSizes,
   primaryColor,
+  accentColor,
   contactBarColor,
   profileImage,
   handleFocus,
@@ -40,8 +42,8 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
             {data.title.trim() && (
               <EditableText
                 tagName="p"
-                style={{ fontSize: `${fontSizes.title}px` }}
-                className="opacity-90 mb-3 font-medium"
+                style={{ fontSize: `${fontSizes.title}px`, color: accentColor }}
+                className="mb-3 font-normal opacity-100"
                 value={data.title}
                 onFocus={(el) => handleFocus(el, 'title')}
                 onChange={(val) => onChange({ ...data, title: val })}
@@ -51,7 +53,7 @@ export const ResumeHeader: React.FC<ResumeHeaderProps> = ({
               <EditableText
                 tagName="p"
                 style={{ fontSize: `${fontSizes.summary}px` }}
-                className="leading-tight opacity-95 text-justify w-full"
+                className="font-normal opacity-100 text-justify w-full"
                 value={data.summary}
                 multiline
                 onFocus={(el) => handleFocus(el, 'summary')}

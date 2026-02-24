@@ -43,7 +43,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 printColorAdjust: 'exact',
                 fontSize: `${fontSizes.content * 0.8}px`
               }}
-              className="text-white px-2.5 py-0.5 rounded-[4px] font-bold opacity-100 shadow-none border-0 mr-1"
+              className="text-white px-2.5 py-0.5 rounded-[4px] font-normal opacity-100 shadow-none border-0 mr-1"
               value={skill}
               onFocus={(el) => handleFocus(el, 'content')}
               onChange={(val) => {

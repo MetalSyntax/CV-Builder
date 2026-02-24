@@ -128,6 +128,7 @@ const Resume: React.FC<ResumeProps> = ({
         data={data}
         fontSizes={data.fontSizes}
         primaryColor={primaryColor}
+        accentColor={accentColor}
         contactBarColor={contactBarColor}
         profileImage={profileImage}
         handleFocus={handleFocus}

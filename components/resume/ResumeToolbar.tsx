@@ -20,7 +20,7 @@ export const ResumeToolbar: React.FC<ResumeToolbarProps> = ({
 
   return (
     <div
-      className="absolute z-50 flex items-center bg-zinc-900 text-white rounded-lg shadow-2xl p-1 border border-white/10"
+      className="absolute z-50 flex items-center bg-zinc-900 text-white rounded-lg shadow-2xl p-1 border border-white/10 print:hidden"
       style={{ top, left }}
     >
       <button

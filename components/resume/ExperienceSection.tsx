@@ -37,7 +37,7 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                 <EditableText
                   tagName="h3"
                   style={{ fontSize: `${fontSizes.content}px` }}
-                  className="font-bold leading-tight text-gray-900"
+                  className="font-normal leading-tight text-gray-900"
                   value={exp.role}
                   onFocus={(el) => handleFocus(el, 'content')}
                   onChange={(val) => {
