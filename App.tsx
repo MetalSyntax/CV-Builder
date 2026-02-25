@@ -10,7 +10,9 @@ import html2canvas from 'html2canvas';
 import { 
   initDB, getAllResumes, saveResume, createNewResume, deleteResume, ResumeRecord 
 } from './utils/db';
-import { Plus, Trash2, FolderOpen, Copy, Save, Check } from 'lucide-react';
+import { Plus, Trash2, FolderOpen, Copy, Save, Check, XCircle } from 'lucide-react';
+import { ToastContainer, ToastType } from './components/common/Toast';
+import { Modal } from './components/common/Modal';
 
 // Icono de usuario gris para imagen por defecto (SVG Data URL)
 const DEFAULT_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239ca3af'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'%3E%3C/path%3E%3C/svg%3E";
@@ -50,6 +52,45 @@ const App: React.FC = () => {
   // Editing Resume Title State
   const [editingResumeId, setEditingResumeId] = useState<string | null>(null);
   const [editingResumeName, setEditingResumeName] = useState<string>("");
+
+  // Toast State
+  const [toasts, setToasts] = useState<{ id: string; message: string; type: ToastType }[]>([]);
+
+  const showToast = (message: string, type: ToastType = 'info') => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      removeToast(id);
+    }, 5000);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  // Modal State
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'confirm' | 'prompt';
+    defaultValue?: string;
+    onConfirm: (value?: string) => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'confirm',
+    onConfirm: () => {}
+  });
+
+  const openModal = (config: Omit<typeof modalConfig, 'isOpen'>) => {
+    setModalConfig({ ...config, isOpen: true });
+  };
+
+  const closeModal = () => {
+    setModalConfig(prev => ({ ...prev, isOpen: false }));
+  };
 
   // Initialize DB and Load Data
   useEffect(() => {
@@ -275,7 +316,7 @@ const App: React.FC = () => {
       pdf.save(`CV_${resumeData.name.replace(/\s+/g, '_')}_${dateStr}.pdf`);
     } catch (error) {
       console.error('Error generando PDF:', error);
-      alert('Hubo un error al generar el PDF.');
+      showToast('Hubo un error al generar el PDF.', 'error');
     } finally {
       setIsExporting(false);
     }
@@ -336,32 +377,49 @@ const App: React.FC = () => {
   };
 
   const handleAddNewResume = async () => {
-    const name = window.prompt('Nombre del nuevo CV:', `CV ${allResumes.length + 1}`);
-    if (name) {
-      const newRec = await createNewResume(name);
-      setAllResumes(prev => [...prev, newRec]);
-      setCurrentId(newRec.id);
-      setResumeData(newRec.data);
-      localStorage.setItem('cv_builder_currentId', newRec.id);
-    }
+    openModal({
+      title: 'Nuevo CV',
+      message: 'Introduce el nombre para tu nuevo currículum:',
+      type: 'prompt',
+      defaultValue: `CV ${allResumes.length + 1}`,
+      onConfirm: async (name) => {
+        if (name) {
+          const newRec = await createNewResume(name);
+          setAllResumes(prev => [...prev, newRec]);
+          setCurrentId(newRec.id);
+          setResumeData(newRec.data);
+          localStorage.setItem('cv_builder_currentId', newRec.id);
+          showToast('Nuevo CV creado con éxito.', 'success');
+        }
+        closeModal();
+      }
+    });
   };
 
   const handleDeleteResume = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (allResumes.length <= 1) {
-      alert('Debes tener al menos un CV.');
+      showToast('Debes tener al menos un CV.', 'warning');
       return;
     }
-    if (window.confirm('¿Eliminar este CV permanentemente?')) {
-      await deleteResume(id);
-      const remaining = allResumes.filter(r => r.id !== id);
-      setAllResumes(remaining);
-      if (currentId === id) {
-        setCurrentId(remaining[0].id);
-        setResumeData(remaining[0].data);
-        localStorage.setItem('cv_builder_currentId', remaining[0].id);
+
+    openModal({
+      title: 'Eliminar CV',
+      message: '¿Estás seguro de que quieres eliminar este CV permanentemente? Esta acción no se puede deshacer.',
+      type: 'confirm',
+      onConfirm: async () => {
+        await deleteResume(id);
+        const remaining = allResumes.filter(r => r.id !== id);
+        setAllResumes(remaining);
+        if (currentId === id) {
+          setCurrentId(remaining[0].id);
+          setResumeData(remaining[0].data);
+          localStorage.setItem('cv_builder_currentId', remaining[0].id);
+        }
+        showToast('CV eliminado correctamente.', 'info');
+        closeModal();
       }
-    }
+    });
   };
 
   const handleDuplicateResume = async (id: string, e: React.MouseEvent) => {
@@ -427,22 +485,25 @@ const App: React.FC = () => {
         try {
           const content = JSON.parse(e.target?.result as string);
           if (content && Array.isArray(content.resumes)) {
-            if (window.confirm(`Se importarán ${content.resumes.length} CVs. ¿Deseas continuar?`)) {
-              for (const resume of content.resumes) {
-                // Ensure unique IDs for imported resumes if they collide, 
-                // but usually backups are for restoration. 
-                // We'll keep IDs but update updatedAt.
-                await saveResume(resume);
+            openModal({
+              title: 'Importar JSON',
+              message: `Se detectaron ${content.resumes.length} CVs en el archivo. ¿Deseas importarlos todos?`,
+              type: 'confirm',
+              onConfirm: async () => {
+                for (const resume of content.resumes) {
+                  await saveResume(resume);
+                }
+                const updated = await getAllResumes();
+                setAllResumes(updated);
+                showToast('Importación completada con éxito.', 'success');
+                closeModal();
               }
-              const updated = await getAllResumes();
-              setAllResumes(updated);
-              alert('Importación completada con éxito.');
-            }
+            });
           } else {
-            alert('El archivo JSON no tiene un formato válido.');
+            showToast('El archivo JSON no tiene un formato válido.', 'error');
           }
         } catch (err) {
-          alert('Error al leer el archivo JSON.');
+          showToast('Error al leer el archivo JSON.', 'error');
         }
       };
       reader.readAsText(file);
@@ -450,11 +511,16 @@ const App: React.FC = () => {
   };
 
   const handleReset = () => {
-    if (window.confirm('¿Estás seguro de que quieres reiniciar TODOS tus datos? Se borrarán todos los CVs guardados.')) {
-      indexedDB.deleteDatabase('cv-builder-db');
-      localStorage.clear();
-      window.location.reload();
-    }
+    openModal({
+      title: 'Reiniciar Todo',
+      message: '¿Estás completamente seguro de que quieres borrar TODOS tus datos? Esta acción es irreversible.',
+      type: 'confirm',
+      onConfirm: () => {
+        indexedDB.deleteDatabase('cv-builder-db');
+        localStorage.clear();
+        window.location.reload();
+      }
+    });
   };
 
   return (
@@ -857,6 +923,20 @@ const App: React.FC = () => {
       >
         <Printer size={24} />
       </button>
+
+      {/* Modal Dialogs */}
+      <Modal 
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        defaultValue={modalConfig.defaultValue}
+        onConfirm={modalConfig.onConfirm}
+      />
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
 
     </div>
   );
