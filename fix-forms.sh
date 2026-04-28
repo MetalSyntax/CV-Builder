@@ -1,3 +1,7 @@
+#!/bin/bash
+# Revert to a simpler useDragAndDrop approach for SkillsForm and InterestsForm
+
+cat << 'INNER_EOF' > components/editor/SkillsForm.tsx
 import React, { useEffect, useRef } from 'react';
 import { Zap, Plus, Minus, GripVertical, Eye, EyeOff } from 'lucide-react';
 import { ResumeData } from '../../types';
@@ -124,3 +128,5 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({
     </EditorFormSection>
   );
 };
+INNER_EOF
+

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Globe, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Globe, Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { ResumeData } from '../../types';
 import { EditorFormSection } from './EditorFormSection';
 
@@ -38,10 +38,21 @@ export const LanguagesForm: React.FC<LanguagesFormProps> = ({
           const progress = (lang.score / 100) * 100;
 
           return (
-            <div key={idx} className="group relative bg-gray-50/50 dark:bg-zinc-950/50 p-5 rounded-2xl border border-gray-100/80 dark:border-zinc-800/80 hover:border-teal-500/30 transition-all hover:shadow-lg hover:shadow-teal-500/5">
-              <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0">
+            <div key={idx} className={`group relative p-5 rounded-2xl border transition-all
+              ${lang.hidden
+                ? 'bg-amber-50/30 dark:bg-amber-900/5 border-dashed border-amber-200 dark:border-amber-800/40 opacity-60'
+                : 'bg-gray-50/50 dark:bg-zinc-950/50 border-gray-100/80 dark:border-zinc-800/80 hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-500/5'
+              }`}>
+              <div className={`absolute top-4 right-4 flex gap-1 transition-all transform translate-y-1 group-hover:translate-y-0 ${lang.hidden ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                 <button onClick={() => onMoveItem('languages', idx, 'up')} className="p-1.5 text-gray-400 hover:text-teal-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm border border-transparent hover:border-gray-100 dark:hover:border-zinc-700" disabled={idx === 0}><ChevronUp size={14}/></button>
                 <button onClick={() => onMoveItem('languages', idx, 'down')} className="p-1.5 text-gray-400 hover:text-teal-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm border border-transparent hover:border-gray-100 dark:hover:border-zinc-700" disabled={idx === data.languages.length - 1}><ChevronDown size={14}/></button>
+                <button
+                  onClick={() => updateItem('languages', idx, 'hidden', !lang.hidden)}
+                  className={`p-1.5 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm border border-transparent hover:border-gray-100 dark:hover:border-zinc-700 transition-colors ${lang.hidden ? 'text-amber-500' : 'text-gray-400 hover:text-amber-500'}`}
+                  title={lang.hidden ? 'Mostrar en CV' : 'Ocultar del CV'}
+                >
+                  {lang.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
                 <button onClick={() => removeItem('languages', idx)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm border border-transparent hover:border-gray-100 dark:hover:border-zinc-700"><Trash2 size={14} /></button>
               </div>
 

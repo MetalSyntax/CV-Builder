@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Award, Plus, Trash2, ChevronUp, ChevronDown, Type, GripVertical } from 'lucide-react';
+import { Award, Plus, Trash2, ChevronUp, ChevronDown, Type, GripVertical, Eye, EyeOff } from 'lucide-react';
 import { ResumeData } from '../../types';
 import { EditorFormSection } from './EditorFormSection';
 import { SingleDatePicker } from './SingleDatePicker';
+import { AutoResizeTextarea } from './AutoResizeTextarea';
 
 interface CoursesFormProps {
   data: ResumeData;
@@ -63,32 +64,45 @@ export const CoursesForm: React.FC<CoursesFormProps> = ({
             onDragStart={(e) => handleDragStart(e, idx)}
             onDragOver={(e) => handleDragOver(e, idx)}
             onDragEnd={() => setDraggedCourseIdx(null)}
-            className={`bg-gray-50/50 dark:bg-zinc-950/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-800 relative group transition-all ${draggedCourseIdx === idx ? 'opacity-0 scale-95' : 'opacity-100'}`}
+            className={`p-4 rounded-xl border relative group transition-all
+              ${draggedCourseIdx === idx ? 'opacity-0 scale-95' : course.hidden ? 'opacity-60' : 'opacity-100'}
+              ${course.hidden
+                ? 'bg-amber-50/30 dark:bg-amber-900/5 border-dashed border-amber-200 dark:border-amber-800/40'
+                : 'bg-gray-50/50 dark:bg-zinc-950/50 border-gray-100 dark:border-zinc-800'
+              }`}
           >
-             <div className="absolute top-3 right-3 flex gap-0.5 items-center opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-zinc-800 p-1 rounded-lg border border-gray-100 dark:border-zinc-700 shadow-sm z-10">
+             <div className={`absolute top-3 right-3 flex gap-0.5 items-center transition-opacity bg-white dark:bg-zinc-800 p-1 rounded-lg border border-gray-100 dark:border-zinc-700 shadow-sm z-10 ${course.hidden ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                 <div className="p-1.5 text-gray-300 cursor-grab active:cursor-grabbing hover:text-teal-500 transition-colors">
                   <GripVertical size={14} />
                 </div>
+                <div className="w-px h-3 bg-gray-200 dark:bg-zinc-700 mx-1"></div>
+                <button
+                  onClick={() => updateItem('courses', idx, 'hidden', !course.hidden)}
+                  className={`p-1.5 transition-colors ${course.hidden ? 'text-amber-500' : 'text-gray-400 hover:text-amber-500'}`}
+                  title={course.hidden ? 'Mostrar en CV' : 'Ocultar del CV'}
+                >
+                  {course.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
                 <div className="w-px h-3 bg-gray-200 dark:bg-zinc-700 mx-1"></div>
                 <button onClick={() => removeItem('courses', idx)} className="p-1.5 text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
               </div>
               <div className="space-y-3">
                 <div className="space-y-1">
                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Título del Curso</label>
-                  <input 
-                    value={course.title} 
+                  <AutoResizeTextarea
+                    value={course.title}
                     onChange={(e) => updateItem('courses', idx, 'title', e.target.value)}
-                    className="w-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-lg py-1.5 px-3 text-xs font-bold text-gray-800 dark:text-white focus:ring-1 focus:ring-teal-500/30 outline-none"
+                    className="w-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-lg py-1.5 px-3 text-xs font-bold text-gray-800 dark:text-white focus:ring-1 focus:ring-teal-500/30 outline-none leading-normal"
                     placeholder="Ejem: AWS Solutions Architect"
                   />
                 </div>
-                
+
                 <div className="space-y-1">
                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Emisor / Plataforma</label>
-                  <input 
-                    value={course.provider} 
+                  <AutoResizeTextarea
+                    value={course.provider}
                     onChange={(e) => updateItem('courses', idx, 'provider', e.target.value)}
-                    className="w-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-lg py-1.5 px-3 text-xs font-bold text-gray-800 dark:text-white focus:ring-1 focus:ring-teal-500/30 outline-none"
+                    className="w-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-lg py-1.5 px-3 text-xs font-bold text-gray-800 dark:text-white focus:ring-1 focus:ring-teal-500/30 outline-none leading-normal"
                     placeholder="Udemy, Coursera, etc."
                   />
                 </div>

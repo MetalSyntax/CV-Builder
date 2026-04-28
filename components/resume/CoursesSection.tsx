@@ -28,6 +28,7 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({
       />
       <div className="space-y-3">
         {data.courses.map((course, index) => {
+          if (course.hidden) return null;
           const hasContent = course.title.trim() || (course.date && course.date.trim()) || (course.provider && course.provider.trim());
           if (!hasContent) return null;
 

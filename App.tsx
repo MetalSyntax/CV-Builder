@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Download, Printer, Settings, Upload, RefreshCw, Edit3, Palette, FileText, Moon, Sun, Type } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Download, Printer, Settings, Upload, RefreshCw, Edit3, Palette, FileText, Moon, Sun, Type, Undo2, Redo2, User } from 'lucide-react';
 import Resume from './components/Resume';
 import ContentEditor from './components/ContentEditor';
+import { SectionManager } from './components/editor/SectionManager';
+import { AppearanceForm } from './components/editor/AppearanceForm';
 import { INITIAL_DATA } from './constants';
 import { ResumeData } from './types';
 import { parseResumeTxt } from './utils/resumeParser';
@@ -17,9 +19,58 @@ import { Modal } from './components/common/Modal';
 // Icono de usuario gris para imagen por defecto (SVG Data URL)
 const DEFAULT_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239ca3af'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'%3E%3C/path%3E%3C/svg%3E";
 
+const HexColorPicker = ({ label, value, onChange }: { label: string, value: string, onChange: (val: string) => void }) => {
+  const [textValue, setTextValue] = useState(value);
+
+  // Sync text value if external value changes
+  useEffect(() => {
+    setTextValue(value);
+  }, [value]);
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVal = e.target.value;
+    setTextValue(newVal);
+    // Only update actual color if valid hex
+    if (/^#[0-9A-F]{6}$/i.test(newVal) || /^#[0-9A-F]{3}$/i.test(newVal)) {
+      onChange(newVal);
+    }
+  };
+
+  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVal = e.target.value;
+    setTextValue(newVal);
+    onChange(newVal);
+  };
+
+  return (
+    <div className="space-y-1.5 flex flex-col group">
+      <label className="text-[9px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">{label}</label>
+      <div className="flex items-center bg-gray-50 dark:bg-zinc-900/80 p-1.5 rounded-xl border border-gray-200 dark:border-zinc-800 focus-within:border-teal-500 dark:focus-within:border-teal-500 transition-colors shadow-sm overflow-hidden h-10">
+        <div className="relative w-7 h-7 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700 shadow-inner group-hover:scale-105 transition-transform cursor-pointer">
+          <input 
+            type="color" 
+            value={value} 
+            onChange={handleColorChange}
+            className="absolute inset-[-10px] w-[50px] h-[50px] cursor-pointer border-0 p-0 bg-transparent"
+            title={`Seleccionar color para ${label}`}
+          />
+        </div>
+        <input 
+          type="text" 
+          value={textValue}
+          onChange={handleTextChange}
+          placeholder="#000000"
+          className="flex-1 min-w-0 bg-transparent border-0 outline-none text-xs font-mono text-gray-700 dark:text-zinc-300 px-2 uppercase"
+          maxLength={7}
+        />
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
-  // Tabs: 'design' | 'content'
-  const [activeTab, setActiveTab] = useState<'design' | 'content'>('design');
+  // Tabs: 'design' | 'content' | 'user'
+  const [activeTab, setActiveTab] = useState<'design' | 'content' | 'user'>('design');
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem('cv_builder_darkMode');
     return saved ? JSON.parse(saved) : false;
@@ -39,6 +90,11 @@ const App: React.FC = () => {
   const [currentId, setCurrentId] = useState<string | null>(localStorage.getItem('cv_builder_currentId'));
   const [resumeData, setResumeData] = useState<ResumeData>(INITIAL_DATA);
 
+  // History State (Undo/Redo)
+  const [history, setHistory] = useState<ResumeData[]>([INITIAL_DATA]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const isUpdatingHistory = useRef(false);
+
   // Customization State (Now bound to the active CV)
   const [primaryColor, setPrimaryColor] = useState<string>('#651d3b'); 
   const [accentColor, setAccentColor] = useState<string>('#b3b3b3'); 
@@ -48,6 +104,7 @@ const App: React.FC = () => {
 
   const [isSaving, setIsSaving] = useState(false);
   const [showSavedFeedback, setShowSavedFeedback] = useState(false);
+  const lastSavedData = useRef<string>('');
 
   // Editing Resume Title State
   const [editingResumeId, setEditingResumeId] = useState<string | null>(null);
@@ -56,17 +113,17 @@ const App: React.FC = () => {
   // Toast State
   const [toasts, setToasts] = useState<{ id: string; message: string; type: ToastType }[]>([]);
 
-  const showToast = (message: string, type: ToastType = 'info') => {
+  const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => {
       removeToast(id);
     }, 5000);
-  };
+  }, []);
 
-  const removeToast = (id: string) => {
+  const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
-  };
+  }, []);
 
   // Modal State
   const [modalConfig, setModalConfig] = useState<{
@@ -119,13 +176,24 @@ const App: React.FC = () => {
       const active = resumes.find(r => r.id === lastId) || resumes[0];
       
       setCurrentId(active.id);
-      setResumeData(active.data);
-      if (active.data.visualSettings) {
-        setPrimaryColor(active.data.visualSettings.primaryColor);
-        setAccentColor(active.data.visualSettings.accentColor);
-        setContactBarColor(active.data.visualSettings.contactBarColor);
-        setTextColor(active.data.visualSettings.textColor);
-        setFontSize(active.data.visualSettings.fontSize);
+      
+      // Clean existing &nbsp; or \u00A0 from old data
+      const cleanDataStr = JSON.stringify(active.data).replace(/&nbsp;/g, ' ').replace(/\\u00A0/g, ' ');
+      const cleanData = JSON.parse(cleanDataStr);
+      
+      setResumeData(cleanData);
+      
+      // Initialize history
+      setHistory([cleanData]);
+      setHistoryIndex(0);
+      lastSavedData.current = JSON.stringify(cleanData);
+
+      if (cleanData.visualSettings) {
+        setPrimaryColor(cleanData.visualSettings.primaryColor);
+        setAccentColor(cleanData.visualSettings.accentColor);
+        setContactBarColor(cleanData.visualSettings.contactBarColor);
+        setTextColor(cleanData.visualSettings.textColor);
+        setFontSize(cleanData.visualSettings.fontSize);
       }
       localStorage.setItem('cv_builder_currentId', active.id);
     };
@@ -155,11 +223,81 @@ const App: React.FC = () => {
       
       // Update local state to keep everything in sync
       setAllResumes(prev => prev.map(r => r.id === currentId ? updatedRecord : r));
+      lastSavedData.current = JSON.stringify(updatedData);
       
       setShowSavedFeedback(true);
       setTimeout(() => setShowSavedFeedback(false), 2000);
     }
     setIsSaving(false);
+  };
+
+  // Autosave Effect
+  useEffect(() => {
+    if (!currentId) return;
+    const currentDataStr = JSON.stringify(resumeData);
+    
+    if (currentDataStr === lastSavedData.current) return;
+
+    const timeoutId = setTimeout(() => {
+      handleSave(resumeData);
+    }, 2000); // Autosave after 2 seconds of inactivity
+
+    return () => clearTimeout(timeoutId);
+  }, [resumeData, primaryColor, accentColor, contactBarColor, textColor, fontSize, currentId]);
+
+  // History Recording Effect
+  useEffect(() => {
+    if (isUpdatingHistory.current) {
+      isUpdatingHistory.current = false;
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setHistory(prev => {
+        const currentHistory = prev.slice(0, historyIndex + 1);
+        const lastState = currentHistory[currentHistory.length - 1];
+        
+        if (JSON.stringify(lastState) !== JSON.stringify(resumeData)) {
+          const newHistory = [...currentHistory, resumeData];
+          // Keep only last 50 states to prevent memory bloat
+          if (newHistory.length > 50) {
+            return newHistory.slice(newHistory.length - 50);
+          }
+          return newHistory;
+        }
+        return prev;
+      });
+
+      setHistoryIndex(prev => {
+        const currentHistory = history.slice(0, prev + 1);
+        const lastState = currentHistory[currentHistory.length - 1];
+        
+        if (JSON.stringify(lastState) !== JSON.stringify(resumeData)) {
+          return Math.min(prev + 1, 49);
+        }
+        return prev;
+      });
+    }, 800);
+
+    return () => clearTimeout(timeout);
+  }, [resumeData]);
+
+  const undo = () => {
+    if (historyIndex > 0) {
+      isUpdatingHistory.current = true;
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setResumeData(history[newIndex]);
+    }
+  };
+
+  const redo = () => {
+    if (historyIndex < history.length - 1) {
+      isUpdatingHistory.current = true;
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setResumeData(history[newIndex]);
+    }
   };
 
   const handleSwitchResume = async (id: string) => {
@@ -180,13 +318,23 @@ const App: React.FC = () => {
     const selected = allResumes.find(r => r.id === id);
     if (selected) {
       setCurrentId(id);
-      setResumeData(selected.data);
-      if (selected.data.visualSettings) {
-        setPrimaryColor(selected.data.visualSettings.primaryColor);
-        setAccentColor(selected.data.visualSettings.accentColor);
-        setContactBarColor(selected.data.visualSettings.contactBarColor);
-        setTextColor(selected.data.visualSettings.textColor);
-        setFontSize(selected.data.visualSettings.fontSize);
+      
+      const cleanDataStr = JSON.stringify(selected.data).replace(/&nbsp;/g, ' ').replace(/\\u00A0/g, ' ');
+      const cleanData = JSON.parse(cleanDataStr);
+      
+      setResumeData(cleanData);
+      
+      // Reset history for new document
+      setHistory([cleanData]);
+      setHistoryIndex(0);
+      lastSavedData.current = JSON.stringify(cleanData);
+
+      if (cleanData.visualSettings) {
+        setPrimaryColor(cleanData.visualSettings.primaryColor);
+        setAccentColor(cleanData.visualSettings.accentColor);
+        setContactBarColor(cleanData.visualSettings.contactBarColor);
+        setTextColor(cleanData.visualSettings.textColor);
+        setFontSize(cleanData.visualSettings.fontSize);
       }
       localStorage.setItem('cv_builder_currentId', id);
     }
@@ -215,6 +363,13 @@ const App: React.FC = () => {
     setResumeData(prev => ({ ...prev, [field]: value }));
   };
 
+  const updateFontSize = (field: keyof ResumeData['fontSizes'], value: number) => {
+    setResumeData(prev => ({
+      ...prev,
+      fontSizes: { ...prev.fontSizes, [field]: value }
+    }));
+  };
+
   const moveItem = (field: keyof ResumeData, index: number, direction: 'up' | 'down') => {
     const list = [...(resumeData[field] as any[])];
     if (direction === 'up' && index > 0) {
@@ -232,83 +387,88 @@ const App: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleDownloadPDF = async () => {
-    const element = document.getElementById('resume-content');
-    if (!element) return;
+    const firstFrame = document.querySelector<HTMLElement>('.resume-page-frame');
+    if (!firstFrame) return;
+
+    const PAGE_H = 1056;
 
     try {
       setIsExporting(true);
-      
-      const originalShadow = element.style.boxShadow;
-      element.style.boxShadow = 'none';
 
-      const scale = 1;
-      const canvas = await html2canvas(element, {
-        scale: scale,
+      // onclone runs inside html2canvas's own cloned document — React never touches it,
+      // so these DOM changes are safe and won't be reverted by a re-render.
+      const canvas = await html2canvas(firstFrame, {
+        scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        scrollY: -window.scrollY,
-        scrollX: -window.scrollX,
-        onclone: (clonedDoc) => {
-          const el = clonedDoc.getElementById('resume-content');
-          if (el) {
-            el.style.transform = 'none';
-            el.style.margin = '0';
-            el.style.boxShadow = 'none';
-            // Hide toolbars and other UI elements for PDF
-            el.querySelectorAll('.print\\:hidden').forEach((node: any) => {
-              node.style.display = 'none';
-            });
+        scrollY: 0,
+        scrollX: 0,
+        windowWidth: document.documentElement.scrollWidth,
+        windowHeight: document.documentElement.scrollHeight,
+        onclone: (clonedDoc: Document) => {
+          // Force main wrappers to visible to avoid scroll cropping
+          const mainElement = clonedDoc.querySelector('main');
+          if (mainElement) {
+            mainElement.style.overflow = 'visible';
+            mainElement.style.height = 'auto';
+            mainElement.style.position = 'static';
           }
+
+          // Reset any scale transform on the wrapper
+          const clonedWrapper = clonedDoc.getElementById('resume-wrapper');
+          if (clonedWrapper) {
+            clonedWrapper.style.transform = 'none';
+            clonedWrapper.classList.remove('scale-90', 'scale-105', 'origin-top');
+          }
+
+          // Expand the first frame so its full content is captured (no clipping, no shadow)
+          const clonedFrame = clonedDoc.querySelector<HTMLElement>('.resume-page-frame');
+          if (clonedFrame) {
+            clonedFrame.style.overflow = 'visible';
+            clonedFrame.style.height = 'auto';
+            clonedFrame.style.boxShadow = 'none';
+            clonedFrame.style.outline = 'none';
+            clonedFrame.classList.remove('shadow-2xl');
+
+            // Put inner div back in normal flow so height is measured correctly
+            const innerDiv = clonedFrame.firstElementChild as HTMLElement | null;
+            if (innerDiv) {
+              innerDiv.style.position = 'static';
+              innerDiv.style.top = 'auto';
+            }
+          }
+
+          // Hide every other frame and the page-separator labels
+          let seen = false;
+          clonedDoc.querySelectorAll<HTMLElement>('.resume-page-frame, .print\\:hidden').forEach(el => {
+            if (el.classList.contains('resume-page-frame')) {
+              if (!seen) { seen = true; }
+              else { el.style.display = 'none'; }
+            } else {
+              el.style.display = 'none';
+            }
+          });
         }
       });
 
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      
-      const pageHeightPx = 1056 * scale;
-      const totalPages = Math.ceil(imgHeight / pageHeightPx);
+      const pdfPageHeightPx = PAGE_H * 2; // matches scale: 2
+      const numPdfPages = Math.max(1, Math.ceil(canvas.height / pdfPageHeightPx));
 
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'letter',
-        compress: true
-      });
-
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter', compress: true });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      for (let i = 0; i < totalPages; i++) {
+      for (let i = 0; i < numPdfPages; i++) {
         if (i > 0) pdf.addPage();
-        
-        const sourceY = i * pageHeightPx;
-        let sourceHeight = pageHeightPx;
-        
-        // El último segmento puede ser más corto
-        if (sourceY + sourceHeight > imgHeight) {
-          sourceHeight = imgHeight - sourceY;
-        }
-
         const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = imgWidth;
-        pageCanvas.height = pageHeightPx; // Siempre el tamaño de la hoja
-        const ctx = pageCanvas.getContext('2d');
-        
-        if (ctx) {
-          // Pintamos de blanco el fondo de la página nueva
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-          
-          ctx.drawImage(
-            canvas,
-            0, sourceY, imgWidth, sourceHeight,
-            0, 0, imgWidth, sourceHeight
-          );
-        }
-
-        const pageData = pageCanvas.toDataURL('image/jpeg', 1.0);
-        pdf.addImage(pageData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = pdfPageHeightPx;
+        const ctx = pageCanvas.getContext('2d')!;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        ctx.drawImage(canvas, 0, -i * pdfPageHeightPx);
+        pdf.addImage(pageCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfWidth, pdfHeight);
       }
 
       const now = new Date();
@@ -524,8 +684,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col md:flex-row transition-colors duration-300 ${darkMode ? 'dark bg-black' : 'bg-gray-100'}`}>
-      
+    <div className={`min-h-screen flex flex-col md:flex-row transition-colors duration-300 ${darkMode ? 'dark bg-black' : 'bg-gray-100'} print:bg-transparent print:min-h-0`}>
+
       {/* Sidebar Controls */}
       <aside className="w-full md:w-96 bg-white dark:bg-zinc-950 shadow-xl z-20 print:hidden flex-shrink-0 h-screen sticky top-0 flex flex-col border-r border-gray-200 dark:border-zinc-800">
         
@@ -568,6 +728,13 @@ const App: React.FC = () => {
                 <Edit3 size={14} />
                 Contenido
               </button>
+              <button 
+                onClick={() => setActiveTab('user')}
+                className={`flex-1 py-1.5 text-xs font-bold flex items-center justify-center gap-2 rounded-lg transition-all ${activeTab === 'user' ? 'bg-white dark:bg-zinc-800 text-teal-600 dark:text-teal-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300'}`}
+              >
+                <User size={14} />
+                Usuario
+              </button>
             </div>
           </div>
         </div>
@@ -575,8 +742,15 @@ const App: React.FC = () => {
         {/* Sidebar Content (Scrollable) */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-5 space-y-6 custom-scrollbar bg-gray-50/30 dark:bg-black/20">
           
-          {activeTab === 'design' ? (
+          {activeTab === 'design' && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
+              
+              {/* Layout Manager */}
+              <SectionManager data={resumeData} updateField={updateField} />
+
+              {/* Appearance Form */}
+              <AppearanceForm data={resumeData} updateField={updateField} updateFontSize={updateFontSize} />
+
               {/* Color Controls */}
               <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400 mb-1">
@@ -585,57 +759,26 @@ const App: React.FC = () => {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Encabezado</label>
-                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900 p-1.5 rounded-xl border border-gray-100 dark:border-zinc-800">
-                      <input 
-                        type="color" 
-                        value={primaryColor} 
-                        onChange={(e) => setPrimaryColor(e.target.value)}
-                        className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0 bg-transparent overflow-hidden"
-                      />
-                      <span className="text-[10px] font-mono text-gray-500 dark:text-zinc-400 truncate">{primaryColor}</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Seccs / Título</label>
-                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900 p-1.5 rounded-xl border border-gray-100 dark:border-zinc-800">
-                      <input 
-                        type="color" 
-                        value={accentColor} 
-                        onChange={(e) => setAccentColor(e.target.value)}
-                        className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0 bg-transparent overflow-hidden"
-                      />
-                      <span className="text-[10px] font-mono text-gray-500 dark:text-zinc-400 truncate">{accentColor}</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Contacto</label>
-                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900 p-1.5 rounded-xl border border-gray-100 dark:border-zinc-800">
-                      <input 
-                        type="color" 
-                        value={contactBarColor} 
-                        onChange={(e) => setContactBarColor(e.target.value)}
-                        className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0 bg-transparent overflow-hidden"
-                      />
-                      <span className="text-[10px] font-mono text-gray-500 dark:text-zinc-400 truncate">{contactBarColor}</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Texto</label>
-                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900 p-1.5 rounded-xl border border-gray-100 dark:border-zinc-800">
-                      <input 
-                        type="color" 
-                        value={textColor} 
-                        onChange={(e) => setTextColor(e.target.value)}
-                        className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0 bg-transparent overflow-hidden"
-                      />
-                      <span className="text-[10px] font-mono text-gray-500 dark:text-zinc-400 truncate">{textColor}</span>
-                    </div>
-                  </div>
+                  <HexColorPicker 
+                    label="Encabezado" 
+                    value={primaryColor} 
+                    onChange={setPrimaryColor} 
+                  />
+                  <HexColorPicker 
+                    label="Seccs / Título" 
+                    value={accentColor} 
+                    onChange={setAccentColor} 
+                  />
+                  <HexColorPicker 
+                    label="Contacto" 
+                    value={contactBarColor} 
+                    onChange={setContactBarColor} 
+                  />
+                  <HexColorPicker 
+                    label="Texto" 
+                    value={textColor} 
+                    onChange={setTextColor} 
+                  />
                 </div>
               </div>
 
@@ -713,7 +856,9 @@ const App: React.FC = () => {
                 </div>
               </div>
             </div>
-          ) : (
+          )}
+
+          {activeTab === 'user' && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
               {/* Resume Manager Card */}
               <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
@@ -876,7 +1021,11 @@ const App: React.FC = () => {
                   />
                 </div>
               </div>
+            </div>
+          )}
 
+          {activeTab === 'content' && (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
               <ContentEditor 
                 data={resumeData} 
                 onChange={setResumeData} 
@@ -888,8 +1037,8 @@ const App: React.FC = () => {
         </div>
 
         {/* Footer Actions */}
-        <div className="p-5 border-t border-gray-100 dark:border-zinc-900/50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md mt-auto">
-          <button 
+        <div className="p-5 border-t border-gray-100 dark:border-zinc-900/50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md mt-auto space-y-2">
+          <button
             onClick={handlePrint}
             className="w-full bg-teal-600 hover:bg-teal-700 text-white font-black py-4 px-6 rounded-2xl shadow-xl shadow-teal-600/20 transition-all flex flex-col items-center justify-center leading-none hover:scale-[1.02] active:scale-[0.98] uppercase tracking-[0.1em]"
           >
@@ -897,14 +1046,24 @@ const App: React.FC = () => {
               <Printer size={16} />
               <span>Guardar PDF</span>
             </div>
-            <span className="text-[8px] opacity-60 font-bold mt-2 tracking-[0.2em]">Formato Profesional / ATS Ready</span>
+            <span className="text-[8px] opacity-60 font-bold mt-2 tracking-[0.2em]">Imprimir / Diálogo del navegador</span>
           </button>
+           {/*<button>
+            onClick={handleDownloadPDF}
+            disabled={isExporting}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-black py-3 px-6 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 uppercase tracking-[0.1em] text-xs hover:scale-[1.02] active:scale-[0.98]"
+          >
+            {isExporting
+              ? <><RefreshCw size={14} className="animate-spin" /><span>Generando…</span></>
+              : <><Download size={14} /><span>Descargar PDF directo</span></>
+            }
+          </button>*/}
         </div>
         
       </aside>
 
       {/* Main Preview Area */}
-      <main className="flex-1 flex justify-center p-4 md:p-10 overflow-auto bg-gray-200 dark:bg-black scrollbar-hide">
+      <main className="flex-1 flex justify-center p-4 md:p-10 overflow-auto bg-gray-200 dark:bg-black scrollbar-hide print:p-0 print:m-0 print:bg-transparent print:overflow-visible">
         <Resume 
           data={resumeData} 
           primaryColor={primaryColor}
@@ -916,13 +1075,47 @@ const App: React.FC = () => {
         />
       </main>
 
-      {/* Mobile Print Fab */}
-      <button 
-        onClick={handlePrint}
-        className="md:hidden fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-2xl z-50 print:hidden"
-      >
-        <Printer size={24} />
-      </button>
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50 print:hidden">
+        <button 
+          onClick={undo}
+          disabled={historyIndex <= 0}
+          className="p-3 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+          title="Deshacer"
+        >
+          <Undo2 size={20} className="group-active:-translate-x-1 transition-transform" />
+        </button>
+        <button 
+          onClick={redo}
+          disabled={historyIndex >= history.length - 1}
+          className="p-3 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+          title="Rehacer"
+        >
+          <Redo2 size={20} className="group-active:translate-x-1 transition-transform" />
+        </button>
+        
+        <button 
+          onClick={() => handleSave()}
+          disabled={isSaving || showSavedFeedback}
+          className={`p-4 rounded-full shadow-2xl transition-all flex items-center justify-center ${
+            showSavedFeedback 
+              ? 'bg-green-500 text-white scale-110' 
+              : 'bg-teal-600 hover:bg-teal-700 text-white active:scale-95'
+          }`}
+          title="Guardar Cambios"
+        >
+          {showSavedFeedback ? <Check size={24} /> : isSaving ? <RefreshCw size={24} className="animate-spin" /> : <Save size={24} />}
+        </button>
+
+        {/* Mobile Print Fab */}
+        <button 
+          onClick={handlePrint}
+          className="md:hidden p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl transition-all active:scale-95 flex items-center justify-center"
+          title="Imprimir / PDF"
+        >
+          <Printer size={24} />
+        </button>
+      </div>
 
       {/* Modal Dialogs */}
       <Modal 

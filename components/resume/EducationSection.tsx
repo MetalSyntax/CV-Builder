@@ -28,6 +28,7 @@ export const EducationSection: React.FC<EducationSectionProps> = ({
       />
       <div className="space-y-3">
         {data.education.map((edu, index) => {
+          if (edu.hidden) return null;
           const hasContent = edu.degree.trim() || edu.institution.trim() || edu.period.trim() || edu.location.trim();
           if (!hasContent) return null;
 

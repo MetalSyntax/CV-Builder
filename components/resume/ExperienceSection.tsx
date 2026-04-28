@@ -28,6 +28,7 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
       />
       <div className="space-y-3">
         {data.experience.map((exp, index) => {
+          if (exp.hidden) return null;
           const hasContent = exp.role.trim() || exp.company.trim() || exp.period.trim() || exp.location.trim() || exp.tasks.some(t => t.trim());
           if (!hasContent) return null;
 
@@ -86,7 +87,7 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                 )}
               </div>
               {exp.tasks.some(t => t.trim()) && (
-                <ul className="mt-0.5 space-y-0 text-gray-600 list-disc list-inside leading-tight">
+                <ul className="mt-0.5 space-y-0 text-gray-600 list-disc list-inside leading-tight experience-tasks">
                   {exp.tasks.map((task, i) => {
                     if (!task.trim()) return null;
                     return (

@@ -17,7 +17,8 @@ export const InterestsSection: React.FC<InterestsSectionProps> = ({
   onChange,
 }) => {
   const { fontSizes } = data;
-  const hasVisibleInterests = data.interests.filter(i => i.trim()).length > 0;
+  const hiddenInterests = data.hiddenInterests || [];
+  const hasVisibleInterests = data.interests.some((i, idx) => i.trim() && !hiddenInterests.includes(idx));
   if (!hasVisibleInterests) return null;
 
   return (
@@ -30,7 +31,7 @@ export const InterestsSection: React.FC<InterestsSectionProps> = ({
       />
       <div className="flex flex-wrap gap-2">
         {data.interests.map((interest, i) => {
-          if (!interest.trim()) return null;
+          if (!interest.trim() || hiddenInterests.includes(i)) return null;
           return (
             <EditableText
               key={i}

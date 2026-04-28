@@ -1,8 +1,6 @@
 import React from 'react';
 import { ResumeData } from '../types';
 import { PersonalForm } from './editor/PersonalForm';
-import { AppearanceForm } from './editor/AppearanceForm';
-import { SectionManager } from './editor/SectionManager';
 import { ExperienceForm } from './editor/ExperienceForm';
 import { EducationForm } from './editor/EducationForm';
 import { CoursesForm } from './editor/CoursesForm';
@@ -45,23 +43,8 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange, onMoveIte
     onChange({ ...data, [field]: newList });
   };
 
-  const updateFontSize = (field: keyof ResumeData['fontSizes'], value: number) => {
-    onChange({
-      ...data,
-      fontSizes: { ...data.fontSizes, [field]: value }
-    });
-  };
-
   return (
     <div className="space-y-6 pb-20">
-      <SectionManager data={data} updateField={updateField} />
-      
-      <AppearanceForm 
-        data={data} 
-        updateField={updateField} 
-        updateFontSize={updateFontSize} 
-      />
-
       <PersonalForm 
         data={data} 
         updateField={updateField} 

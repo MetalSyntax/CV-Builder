@@ -19,7 +19,8 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
   onChange,
 }) => {
   const { fontSizes } = data;
-  const hasVisibleSkills = data.skills.filter(s => s.trim()).length > 0;
+  const hiddenSkills = data.hiddenSkills || [];
+  const hasVisibleSkills = data.skills.some((s, i) => s.trim() && !hiddenSkills.includes(i));
   if (!hasVisibleSkills) return null;
 
   return (
@@ -32,7 +33,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
       />
       <div className="flex flex-wrap gap-2 mr-4">
         {data.skills.map((skill, index) => {
-          if (!skill.trim()) return null;
+          if (!skill.trim() || hiddenSkills.includes(index)) return null;
           return (
             <EditableText
               tagName="span"

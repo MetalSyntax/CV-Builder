@@ -28,7 +28,7 @@ export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
       />
       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
         {data.languages.map((lang, index) => {
-          if (!lang.language.trim()) return null;
+          if (lang.hidden || !lang.language.trim()) return null;
           const dots = Math.round(lang.score / 20);
           return (
             <div key={index} className="flex flex-col">

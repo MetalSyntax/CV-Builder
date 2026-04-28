@@ -3,6 +3,7 @@ export interface EducationItem {
   institution: string;
   period: string;
   location: string;
+  hidden?: boolean;
 }
 
 export interface ExperienceItem {
@@ -11,12 +12,14 @@ export interface ExperienceItem {
   period: string;
   location: string;
   tasks: string[];
+  hidden?: boolean;
 }
 
 export interface CourseItem {
   title: string;
   date: string;
   provider: string;
+  hidden?: boolean;
 }
 
 export interface ResumeData {
@@ -37,7 +40,9 @@ export interface ResumeData {
   experience: ExperienceItem[];
   skills: string[];
   courses: CourseItem[];
-  languages: { language: string; level: string; score: number }[];
+  languages: { language: string; level: string; score: number; hidden?: boolean }[];
+  hiddenSkills?: number[];
+  hiddenInterests?: number[];
   interests: string[];
   fontSizes: {
     name: number;

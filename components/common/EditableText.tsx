@@ -10,21 +10,32 @@ interface EditableTextProps {
   multiline?: boolean;
 }
 
-export const EditableText: React.FC<EditableTextProps> = ({ 
-  value, 
-  onChange, 
-  onFocus, 
-  className, 
-  style, 
-  tagName: Tag = 'div', 
-  multiline = false 
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '');
+
+export const EditableText: React.FC<EditableTextProps> = ({
+  value,
+  onChange,
+  onFocus,
+  className,
+  style,
+  tagName: Tag = 'div',
+  multiline = false
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
   const onInput = () => {
     if (ref.current) {
-      onChange(ref.current.innerHTML);
+      let text = ref.current.innerText || '';
+      // Clean non-breaking spaces and literal &nbsp; code that may appear
+      text = text.replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ');
+      onChange(text);
     }
+  };
+
+  const onPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+    document.execCommand('insertText', false, text);
   };
 
   return (
@@ -33,10 +44,11 @@ export const EditableText: React.FC<EditableTextProps> = ({
       contentEditable
       suppressContentEditableWarning
       onBlur={onInput}
+      onPaste={onPaste}
       onFocus={(e) => onFocus?.(e.currentTarget)}
       className={`${className} outline-none focus:bg-teal-50/20 focus:ring-1 focus:ring-teal-200/50 rounded px-1 -mx-1 transition-all`}
       style={style}
-      dangerouslySetInnerHTML={{ __html: value }}
+      dangerouslySetInnerHTML={{ __html: stripHtml(value) }}
     />
   );
 };
