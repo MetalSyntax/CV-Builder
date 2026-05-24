@@ -27,6 +27,10 @@ export const CoursesForm: React.FC<CoursesFormProps> = ({
 
   if (data.hiddenSections?.includes('courses')) return null;
 
+  const toggleCollapsed = (idx: number) => {
+    updateItem('courses', idx, 'collapsed', !data.courses[idx].collapsed);
+  };
+
   const toggleManual = (idx: number) => {
     setShowManual(prev => ({ ...prev, [idx]: !prev[idx] }));
   };
@@ -57,36 +61,66 @@ export const CoursesForm: React.FC<CoursesFormProps> = ({
       onAdd={() => addItem('courses', { title: '', provider: '', date: '' })}
     >
       <div className="space-y-4">
-        {data.courses.map((course, idx) => (
+        {data.courses.map((course, idx) => {
+          const isCollapsed = course.collapsed ?? false;
+          return (
           <div 
             key={idx} 
             draggable
             onDragStart={(e) => handleDragStart(e, idx)}
             onDragOver={(e) => handleDragOver(e, idx)}
             onDragEnd={() => setDraggedCourseIdx(null)}
-            className={`p-4 rounded-xl border relative group transition-all
+            className={`rounded-xl border relative group transition-all
               ${draggedCourseIdx === idx ? 'opacity-0 scale-95' : course.hidden ? 'opacity-60' : 'opacity-100'}
               ${course.hidden
                 ? 'bg-amber-50/30 dark:bg-amber-900/5 border-dashed border-amber-200 dark:border-amber-800/40'
                 : 'bg-gray-50/50 dark:bg-zinc-950/50 border-gray-100 dark:border-zinc-800'
               }`}
           >
-             <div className={`absolute top-3 right-3 flex gap-0.5 items-center transition-opacity bg-white dark:bg-zinc-800 p-1 rounded-lg border border-gray-100 dark:border-zinc-700 shadow-sm z-10 ${course.hidden ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                <div className="p-1.5 text-gray-300 cursor-grab active:cursor-grabbing hover:text-teal-500 transition-colors">
-                  <GripVertical size={14} />
+              <div 
+                className="flex items-center gap-2 px-4 pt-3 pb-3 cursor-pointer select-none"
+                onClick={() => toggleCollapsed(idx)}
+              >
+                <ChevronDown 
+                  size={14} 
+                  className={`text-gray-400 flex-shrink-0 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+                />
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-bold text-gray-700 dark:text-zinc-300 truncate block">
+                    {course.title || <span className="text-gray-400 italic font-normal">Sin título</span>}
+                  </span>
+                  {course.provider && (
+                    <span className="text-[10px] text-gray-400 dark:text-zinc-500 truncate block">
+                      {course.provider}{course.date ? ` · ${course.date}` : ''}
+                    </span>
+                  )}
                 </div>
-                <div className="w-px h-3 bg-gray-200 dark:bg-zinc-700 mx-1"></div>
-                <button
-                  onClick={() => updateItem('courses', idx, 'hidden', !course.hidden)}
-                  className={`p-1.5 transition-colors ${course.hidden ? 'text-amber-500' : 'text-gray-400 hover:text-amber-500'}`}
-                  title={course.hidden ? 'Mostrar en CV' : 'Ocultar del CV'}
+                <div 
+                  className="flex gap-0.5 items-center flex-shrink-0"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  {course.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-                <div className="w-px h-3 bg-gray-200 dark:bg-zinc-700 mx-1"></div>
-                <button onClick={() => removeItem('courses', idx)} className="p-1.5 text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
+                  <div className="flex gap-0.5 items-center bg-white dark:bg-zinc-800 p-1 rounded-lg border border-gray-100 dark:border-zinc-700 shadow-sm">
+                    <div className="p-1.5 text-gray-300 cursor-grab active:cursor-grabbing hover:text-teal-500 transition-colors">
+                      <GripVertical size={14} />
+                    </div>
+                    <div className="w-px h-3 bg-gray-200 dark:bg-zinc-700 mx-0.5"></div>
+                    <button
+                      onClick={() => updateItem('courses', idx, 'hidden', !course.hidden)}
+                      className={`p-1.5 transition-colors ${course.hidden ? 'text-amber-500' : 'text-gray-400 hover:text-amber-500'}`}
+                      title={course.hidden ? 'Mostrar en CV' : 'Ocultar del CV'}
+                    >
+                      {course.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                    <div className="w-px h-3 bg-gray-200 dark:bg-zinc-700 mx-0.5"></div>
+                    <button onClick={() => removeItem('courses', idx)} className="p-1.5 text-gray-400 hover:text-red-500">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-3">
+
+              {!isCollapsed && (
+              <div className="px-4 pb-4 border-t border-gray-100 dark:border-zinc-800 pt-3 space-y-3">
                 <div className="space-y-1">
                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Título del Curso</label>
                   <AutoResizeTextarea
@@ -139,8 +173,9 @@ export const CoursesForm: React.FC<CoursesFormProps> = ({
                   </div>
                 )}
               </div>
+              )}
           </div>
-        ))}
+        )})}
       </div>
     </EditorFormSection>
   );

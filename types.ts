@@ -4,6 +4,7 @@ export interface EducationItem {
   period: string;
   location: string;
   hidden?: boolean;
+  collapsed?: boolean;
 }
 
 export interface ExperienceItem {
@@ -16,6 +17,7 @@ export interface ExperienceItem {
   companyDescription?: string;
   companyContact?: string;
   archivedTasks?: string[];
+  collapsed?: boolean;
 }
 
 export interface CourseItem {
@@ -23,6 +25,7 @@ export interface CourseItem {
   date: string;
   provider: string;
   hidden?: boolean;
+  collapsed?: boolean;
 }
 
 export interface ResumeData {

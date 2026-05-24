@@ -25,7 +25,6 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({
   const [draggedTask, setDraggedTask] = useState<{ expIdx: number, taskIdx: number } | null>(null);
   const [draggedExpIdx, setDraggedExpIdx] = useState<number | null>(null);
   const [showManual, setShowManual] = useState<Record<number, boolean>>({});
-  const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const [showArchived, setShowArchived] = useState<Record<number, boolean>>({});
 
   if (data.hiddenSections?.includes('experience')) return null;
@@ -35,7 +34,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({
   };
 
   const toggleCollapsed = (idx: number) => {
-    setCollapsed(prev => ({ ...prev, [idx]: !prev[idx] }));
+    updateItem('experience', idx, 'collapsed', !data.experience[idx].collapsed);
   };
 
   const archiveTask = (expIdx: number, taskIdx: number) => {
@@ -115,7 +114,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({
     >
       <div className="space-y-4">
         {data.experience.map((exp, idx) => {
-          const isCollapsed = collapsed[idx] ?? false;
+          const isCollapsed = exp.collapsed ?? false;
           const archived = exp.archivedTasks || [];
 
           return (
