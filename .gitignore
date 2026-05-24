@@ -21,4 +21,9 @@ dist-ssr
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+*.sw??
+
+# Dependency directories and files
+node_modules
+.antigravitycli
+CLAUDE*.md
