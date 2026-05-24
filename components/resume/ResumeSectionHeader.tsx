@@ -22,9 +22,9 @@ export const ResumeSectionHeader: React.FC<ResumeSectionHeaderProps> = ({
         borderBottomColor: sectionStyle === 'modern' ? accentColor : undefined
       }}
       className={`font-black uppercase tracking-[0.15em] mb-2 flex items-center justify-between ${
-        sectionStyle === 'elegant' ? 'border-l-4 pl-3 border-gray-100' : 
-        sectionStyle === 'modern' ? 'border-b-2' : 
-        'border-b border-gray-200 opacity-100'
+        sectionStyle === 'elegant' ? 'border-l-4 pl-3 border-gray-100 w-full' : 
+        sectionStyle === 'modern' ? 'border-b-2 w-max pb-1' : 
+        'border-b border-gray-200 opacity-100 w-max pb-1'
       }`}
     >
       <span>{title}</span>

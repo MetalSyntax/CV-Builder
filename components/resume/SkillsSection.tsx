@@ -26,7 +26,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
   return (
     <section key="skills" className="section-container">
       <ResumeSectionHeader 
-        title="HABILIDADES" 
+        title={data.language === 'en' ? 'SKILLS' : data.language === 'pt' ? 'HABILIDADES' : 'HABILIDADES'} 
         accentColor={accentColor} 
         sectionStyle={data.sectionStyle} 
         fontSize={fontSizes.sectionHeaders} 

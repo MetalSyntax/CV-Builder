@@ -21,7 +21,7 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({
   return (
     <section key="courses" className="section-container">
       <ResumeSectionHeader 
-        title="CERTIFICACIONES" 
+        title={data.language === 'en' ? 'CERTIFICATIONS' : data.language === 'pt' ? 'CERTIFICAÇÕES' : 'CERTIFICACIONES'} 
         accentColor={accentColor} 
         sectionStyle={data.sectionStyle} 
         fontSize={fontSizes.sectionHeaders} 
@@ -34,7 +34,7 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({
 
           return (
             <div key={index}>
-              <div className="flex gap-1 font-bold leading-tight text-gray-800" style={{ fontSize: `${fontSizes.content}px` }}>
+              <div className="flex gap-1 font-bold leading-tight" style={{ fontSize: `${fontSizes.content}px` }}>
                 {course.title.trim() && (
                   <EditableText
                     value={course.title}
@@ -48,23 +48,23 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({
                 )}
                 {course.date && course.date.trim() !== '' && (
                   <>
-                    <span className="ml-1 opacity-70">(</span>
-                    <EditableText
-                      value={course.date}
-                      onFocus={(el) => handleFocus(el, 'content')}
-                      onChange={(val) => {
-                        const newList = [...data.courses];
-                        newList[index] = { ...course, date: val };
-                        onChange({ ...data, courses: newList });
-                      }}
-                    />
-                    <span className="opacity-70">)</span>
+                     <span className="ml-1 opacity-70">(</span>
+                     <EditableText
+                       value={course.date}
+                       onFocus={(el) => handleFocus(el, 'content')}
+                       onChange={(val) => {
+                         const newList = [...data.courses];
+                         newList[index] = { ...course, date: val };
+                         onChange({ ...data, courses: newList });
+                       }}
+                     />
+                     <span className="opacity-70">)</span>
                   </>
                 )}
               </div>
               {course.provider && course.provider.trim() !== '' && (
-                <div className="text-gray-400 italic font-medium opacity-80 flex gap-1" style={{ fontSize: `${fontSizes.content * 0.85}px` }}>
-                  <span>Impartido por:</span>
+                <div className="italic font-medium opacity-60 flex gap-1" style={{ fontSize: `${fontSizes.content * 0.85}px` }}>
+                  <span>{data.language === 'en' ? 'Issued by:' : data.language === 'pt' ? 'Ministrado por:' : 'Impartido por:'}</span>
                   <EditableText
                     value={course.provider}
                     onFocus={(el) => handleFocus(el, 'content')}

@@ -87,12 +87,21 @@ export const INITIAL_DATA: ResumeData = {
     sectionHeaders: 14,
     content: 12
   },
+  lineHeights: {
+    name: 1.2,
+    title: 1.5,
+    summary: 1.6,
+    sectionHeaders: 1.4,
+    content: 1.5,
+    contact: 1.5
+  },
   visualSettings: {
     primaryColor: '#651d3b',
     accentColor: '#b3b3b3',
     contactBarColor: '#30101d',
     textColor: '#374151',
-    fontSize: 'base'
+    fontSize: 'base',
+    fontFamily: 'Ubuntu'
   },
   sectionOrder: ['experience', 'education', 'skills', 'courses', 'languages', 'interests'],
   hiddenSections: [],

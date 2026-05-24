@@ -13,6 +13,9 @@ export interface ExperienceItem {
   location: string;
   tasks: string[];
   hidden?: boolean;
+  companyDescription?: string;
+  companyContact?: string;
+  archivedTasks?: string[];
 }
 
 export interface CourseItem {
@@ -28,6 +31,7 @@ export interface ResumeData {
   summary: string;
   profileImage?: string;
   hideProfileImage?: boolean;
+  language?: 'es' | 'en' | 'pt';
   contact: {
     email: string;
     phone: string;
@@ -52,12 +56,22 @@ export interface ResumeData {
     content: number;
     contact: number;
   };
+  lineHeights?: {
+    name?: number;
+    title?: number;
+    summary?: number;
+    sectionHeaders?: number;
+    content?: number;
+    contact?: number;
+  };
   visualSettings?: {
     primaryColor: string;
     accentColor: string;
     contactBarColor: string;
     textColor: string;
     fontSize: 'sm' | 'base' | 'lg';
+    contactBarLayout?: 'flex' | 'grid' | 'grid-2x2';
+    fontFamily?: string;
   };
   sectionOrder?: string[];
   hiddenSections?: string[];
@@ -69,4 +83,5 @@ export interface ResumeData {
   sectionStyle?: 'modern' | 'classic' | 'elegant';
   dateFormat?: string;
   dateRangeSeparator?: string;
+  taskLineHeight?: number;
 }

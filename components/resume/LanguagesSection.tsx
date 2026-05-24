@@ -21,7 +21,7 @@ export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
   return (
     <section key="languages" className="section-container">
       <ResumeSectionHeader 
-        title="IDIOMAS" 
+        title={data.language === 'en' ? 'LANGUAGES' : data.language === 'pt' ? 'IDIOMAS' : 'IDIOMAS'} 
         accentColor={accentColor} 
         sectionStyle={data.sectionStyle} 
         fontSize={fontSizes.sectionHeaders} 
@@ -35,7 +35,7 @@ export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
               <div className="flex items-center justify-between gap-2 overflow-hidden">
                 <EditableText
                   style={{ fontSize: `${fontSizes.content}px` }}
-                  className="font-bold text-gray-800 leading-tight shrink-0"
+                  className="font-bold leading-tight shrink-0"
                   value={lang.language}
                   onFocus={(el) => handleFocus(el, 'content')}
                   onChange={(val) => {
@@ -53,7 +53,12 @@ export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
                       style={dot <= dots ? { backgroundColor: accentColor } : {}}
                       onClick={() => {
                         const score = dot * 20;
-                        const scoreToLevel: Record<number, string> = { 20: 'Básico', 40: 'Intermedio', 60: 'Avanzado', 80: 'Experto', 100: 'Nativo' };
+                        const scoreToLevel: Record<number, string> = 
+                          data.language === 'en'
+                            ? { 20: 'Basic', 40: 'Intermediate', 60: 'Advanced', 80: 'Expert', 100: 'Native' }
+                            : data.language === 'pt'
+                            ? { 20: 'Básico', 40: 'Intermediário', 60: 'Avançado', 80: 'Especialista', 100: 'Nativo' }
+                            : { 20: 'Básico', 40: 'Intermedio', 60: 'Avanzado', 80: 'Experto', 100: 'Nativo' };
                         const newList = [...data.languages];
                         newList[index] = { ...lang, score, level: scoreToLevel[score] || lang.level };
                         onChange({ ...data, languages: newList });
@@ -65,11 +70,17 @@ export const LanguagesSection: React.FC<LanguagesSectionProps> = ({
               {lang.level.trim() && (
                 <EditableText
                   style={{ fontSize: `${fontSizes.content * 0.85}px` }}
-                  className="text-gray-400 italic font-medium mt-0.5 leading-tight opacity-80"
+                  className="italic font-medium mt-0.5 leading-tight opacity-60"
                   value={lang.level}
                   onFocus={(el) => handleFocus(el, 'content')}
                   onChange={(val) => {
-                    const levelToScore: Record<string, number> = { 'Básico': 20, 'Intermedio': 40, 'Avanzado': 60, 'Experto': 80, 'Nativo': 100 };
+                    const levelToScore: Record<string, number> = { 
+                      'Básico': 20, 'Basic': 20, 
+                      'Intermedio': 40, 'Intermediate': 40, 'Intermediário': 40,
+                      'Avanzado': 60, 'Advanced': 60, 'Avançado': 60,
+                      'Experto': 80, 'Expert': 80, 'Especialista': 80,
+                      'Nativo': 100, 'Native': 100
+                    };
                     const newList = [...data.languages];
                     newList[index] = { ...lang, level: val, score: levelToScore[val] || lang.score };
                     onChange({ ...data, languages: newList });

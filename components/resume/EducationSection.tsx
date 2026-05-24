@@ -21,7 +21,7 @@ export const EducationSection: React.FC<EducationSectionProps> = ({
   return (
     <section key="education" className="section-container">
       <ResumeSectionHeader 
-        title="EDUCACIÓN" 
+        title={data.language === 'en' ? 'EDUCATION' : data.language === 'pt' ? 'EDUCAÇÃO' : 'EDUCACIÓN'} 
         accentColor={accentColor} 
         sectionStyle={data.sectionStyle} 
         fontSize={fontSizes.sectionHeaders} 
@@ -38,7 +38,7 @@ export const EducationSection: React.FC<EducationSectionProps> = ({
                 <EditableText
                   tagName="h3"
                   style={{ fontSize: `${fontSizes.content}px` }}
-                  className="font-bold leading-tight text-gray-900"
+                  className="font-bold leading-tight"
                   value={edu.degree}
                   onFocus={(el) => handleFocus(el, 'content')}
                   onChange={(val) => {
@@ -51,7 +51,7 @@ export const EducationSection: React.FC<EducationSectionProps> = ({
               {edu.institution.trim() && (
                 <EditableText
                   style={{ fontSize: `${fontSizes.content}px` }}
-                  className="font-bold text-gray-700 leading-tight opacity-90"
+                  className="font-bold leading-tight opacity-90"
                   value={edu.institution}
                   onFocus={(el) => handleFocus(el, 'content')}
                   onChange={(val) => {
@@ -61,7 +61,7 @@ export const EducationSection: React.FC<EducationSectionProps> = ({
                   }}
                 />
               )}
-              <div className="flex justify-between text-gray-400 mt-0.5 opacity-80" style={{ fontSize: `${fontSizes.content * 0.85}px` }}>
+              <div className="flex justify-between mt-0.5 opacity-60" style={{ fontSize: `${fontSizes.content * 0.85}px` }}>
                 {edu.period.trim() && (
                   <EditableText
                     value={edu.period}

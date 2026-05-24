@@ -1,4 +1,4 @@
-# 📄 CV-Builder v1.1.0
+# 📄 CV-Builder v1.2.0
 
 A premium, state-of-the-art curriculum vitae builder designed for professionals who value both design and efficiency. Create high-end, ATS-ready resumes with real-time preview and intuitive local management.
 
@@ -51,7 +51,15 @@ A premium, state-of-the-art curriculum vitae builder designed for professionals 
 
 ## 📜 Changelog
 
-### v1.1.0 (Current)
+### v1.2.0 (Current)
+
+- **Fix**: Resolved React 'unique key prop' warnings in Resume lists.
+- **Fix**: Fixed eye icon in Column Manager to correctly toggle section visibility.
+- **Feat**: Added company description and contact details fields.
+- **UI**: Added translations and multi-language support.
+- **Fix**: Prevented inline edits from being reverted during autosave.
+
+### v1.1.0
 
 - **Feat**: Introduced native HTML5 Drag & Drop reordering for all list components.
 - **Feat**: Redesigned `DateRangePicker` with custom state toggles and premium look.

@@ -8,12 +8,16 @@ interface AppearanceFormProps {
   data: ResumeData;
   updateField: (field: keyof ResumeData, value: any) => void;
   updateFontSize: (field: keyof ResumeData['fontSizes'], value: number) => void;
+  contactBarLayout: 'flex' | 'grid' | 'grid-2x2';
+  setContactBarLayout: (val: 'flex' | 'grid' | 'grid-2x2') => void;
 }
 
 export const AppearanceForm: React.FC<AppearanceFormProps> = ({
   data,
   updateField,
-  updateFontSize
+  updateFontSize,
+  contactBarLayout,
+  setContactBarLayout
 }) => {
   const FontSizeControl = ({ label, value, field }: { label: string, value: number, field: keyof ResumeData['fontSizes'] }) => (
     <div className="flex items-center justify-between gap-3 mt-1.5 p-1 bg-white dark:bg-zinc-900/30 rounded-md border border-gray-100 dark:border-zinc-800/50 shadow-sm">
@@ -72,6 +76,25 @@ export const AppearanceForm: React.FC<AppearanceFormProps> = ({
     { value: ' — ', label: 'Raya ( — )' }
   ];
 
+  const contactBarOptions = [
+    { value: 'flex', label: 'Una fila (flex)' },
+    { value: 'grid', label: 'Dos filas (3 col - grid)' },
+    { value: 'grid-2x2', label: 'Dos filas (2 col - grid)' }
+  ];
+
+  const fontOptions = [
+    { value: 'Ubuntu', label: 'Ubuntu' },
+    { value: 'Inter', label: 'Inter' },
+    { value: 'Roboto', label: 'Roboto' },
+    { value: 'Open Sans', label: 'Open Sans' },
+    { value: 'Lato', label: 'Lato' },
+    { value: 'Montserrat', label: 'Montserrat' },
+    { value: 'Poppins', label: 'Poppins' },
+    { value: 'Playfair Display', label: 'Playfair Display' },
+    { value: 'Merriweather', label: 'Merriweather' },
+    { value: 'Lora', label: 'Lora' }
+  ];
+
   return (
     <>
       <EditorFormSection title="Distribución y Estilo" subtitle="Personaliza la estructura visual" icon={Palette}>
@@ -109,6 +132,26 @@ export const AppearanceForm: React.FC<AppearanceFormProps> = ({
               onChange={(val) => updateField('dateRangeSeparator', val)} 
             />
           </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <CustomSelect 
+              label="Distribución de Contacto" 
+              icon={<Layout size={10} />} 
+              value={contactBarLayout} 
+              options={contactBarOptions} 
+              onChange={(val) => setContactBarLayout(val as 'flex' | 'grid' | 'grid-2x2')} 
+            />
+            <CustomSelect 
+              label="Fuente del CV" 
+              icon={<Type size={10} />} 
+              value={data.visualSettings?.fontFamily || 'Ubuntu'} 
+              options={fontOptions} 
+              onChange={(val) => {
+                const newSettings = { ...(data.visualSettings || { primaryColor: '', accentColor: '', contactBarColor: '', textColor: '', fontSize: 'base' as const }), fontFamily: val };
+                updateField('visualSettings', newSettings);
+              }} 
+            />
+          </div>
         </div>
       </EditorFormSection>
 
@@ -120,6 +163,26 @@ export const AppearanceForm: React.FC<AppearanceFormProps> = ({
           <FontSizeControl label="Secciones" value={data.fontSizes.sectionHeaders} field="sectionHeaders" />
           <FontSizeControl label="Resumen" value={data.fontSizes.summary} field="summary" />
           <FontSizeControl label="Contenido" value={data.fontSizes.content} field="content" />
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-3 p-1 bg-white dark:bg-zinc-900/30 rounded-md border border-gray-100 dark:border-zinc-800/50 shadow-sm">
+          <label className="text-[9px] text-gray-400 dark:text-zinc-500 uppercase font-black pl-2 tracking-tighter">Interlineado Tareas</label>
+          <div className="flex items-center gap-0.5 pr-1">
+            <button
+              onClick={() => updateField('taskLineHeight', Math.max(0.9, parseFloat(((data.taskLineHeight ?? 1.25) - 0.05).toFixed(2))))}
+              className="p-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded text-gray-400 hover:text-teal-500 transition-colors"
+            >
+              <Minus size={12} />
+            </button>
+            <span className="w-9 text-center text-[10px] font-bold text-teal-600 dark:text-teal-400">
+              {((data.taskLineHeight ?? 1.25)).toFixed(2)}
+            </span>
+            <button
+              onClick={() => updateField('taskLineHeight', Math.min(2.5, parseFloat(((data.taskLineHeight ?? 1.25) + 0.05).toFixed(2))))}
+              className="p-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded text-gray-400 hover:text-teal-500 transition-colors"
+            >
+              <Plus size={12} />
+            </button>
+          </div>
         </div>
       </EditorFormSection>
     </>

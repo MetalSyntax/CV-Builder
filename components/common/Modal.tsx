@@ -7,10 +7,11 @@ interface ModalProps {
   onConfirm: (value?: string) => void;
   title: string;
   message: string;
-  type: 'confirm' | 'prompt';
+  type: 'confirm' | 'prompt' | 'select';
   defaultValue?: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  options?: { value: string; label: string }[];
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -22,7 +23,8 @@ export const Modal: React.FC<ModalProps> = ({
   type,
   defaultValue = '',
   confirmLabel = 'Confirmar',
-  cancelLabel = 'Cancelar'
+  cancelLabel = 'Cancelar',
+  options
 }) => {
   const [inputValue, setInputValue] = useState(defaultValue);
 
@@ -79,6 +81,31 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
         )}
 
+        {type === 'select' && options && (
+          <div className="space-y-2 mb-6">
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => {
+                  setInputValue(opt.value);
+                }}
+                className={`w-full flex items-center justify-between p-4 rounded-2xl border text-left font-bold transition-all ${
+                  inputValue === opt.value
+                    ? 'border-teal-500 bg-teal-50/50 dark:bg-teal-950/20 text-teal-600 dark:text-teal-400'
+                    : 'border-gray-200 dark:border-zinc-800 hover:border-teal-500/30 text-gray-700 dark:text-zinc-300'
+                }`}
+              >
+                <span>{opt.label}</span>
+                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                  inputValue === opt.value ? 'border-teal-500 bg-teal-500' : 'border-gray-300'
+                }`}>
+                  {inputValue === opt.value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="flex gap-3">
           <button
             onClick={onClose}
@@ -87,7 +114,7 @@ export const Modal: React.FC<ModalProps> = ({
             {cancelLabel}
           </button>
           <button
-            onClick={() => onConfirm(type === 'prompt' ? inputValue : undefined)}
+            onClick={() => onConfirm(type === 'prompt' || type === 'select' ? inputValue : undefined)}
             className={`flex-1 px-6 py-3.5 rounded-2xl text-white font-black uppercase text-xs tracking-widest shadow-lg transition-all active:scale-95 ${
               type === 'confirm' && title.toLowerCase().includes('eliminar')
                 ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20'

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 interface EditableTextProps {
   value: string;
@@ -22,6 +22,20 @@ export const EditableText: React.FC<EditableTextProps> = ({
   multiline = false
 }) => {
   const ref = useRef<HTMLDivElement>(null);
+  const isFocused = useRef(false);
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (ref.current) {
+      const cleanValue = stripHtml(value);
+      if (!initialized.current) {
+        ref.current.innerText = cleanValue;
+        initialized.current = true;
+      } else if (!isFocused.current && ref.current.innerText !== cleanValue) {
+        ref.current.innerText = cleanValue;
+      }
+    }
+  }, [value]);
 
   const onInput = () => {
     if (ref.current) {
@@ -30,6 +44,16 @@ export const EditableText: React.FC<EditableTextProps> = ({
       text = text.replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ');
       onChange(text);
     }
+  };
+
+  const handleBlur = () => {
+    isFocused.current = false;
+    onInput();
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLDivElement>) => {
+    isFocused.current = true;
+    onFocus?.(e.currentTarget);
   };
 
   const onPaste = (e: React.ClipboardEvent) => {
@@ -43,12 +67,11 @@ export const EditableText: React.FC<EditableTextProps> = ({
       ref={ref}
       contentEditable
       suppressContentEditableWarning
-      onBlur={onInput}
+      onBlur={handleBlur}
       onPaste={onPaste}
-      onFocus={(e) => onFocus?.(e.currentTarget)}
+      onFocus={handleFocus}
       className={`${className} outline-none focus:bg-teal-50/20 focus:ring-1 focus:ring-teal-200/50 rounded px-1 -mx-1 transition-all`}
       style={style}
-      dangerouslySetInnerHTML={{ __html: stripHtml(value) }}
     />
   );
 };

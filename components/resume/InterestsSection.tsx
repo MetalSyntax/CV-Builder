@@ -24,7 +24,7 @@ export const InterestsSection: React.FC<InterestsSectionProps> = ({
   return (
     <section key="interests" className="section-container">
       <ResumeSectionHeader 
-        title="INTERESES" 
+        title={data.language === 'en' ? 'INTERESTS' : data.language === 'pt' ? 'INTERESSES' : 'INTERESES'} 
         accentColor={accentColor} 
         sectionStyle={data.sectionStyle} 
         fontSize={fontSizes.sectionHeaders} 
@@ -40,7 +40,7 @@ export const InterestsSection: React.FC<InterestsSectionProps> = ({
                 printColorAdjust: 'exact',
                 fontSize: `${fontSizes.content * 0.8}px`
               }}
-              className="bg-white border border-gray-400 rounded-[5px] px-3 py-1 font-bold text-gray-900 shadow-none whitespace-nowrap opacity-100 mr-1"
+              className="bg-white border border-gray-400 rounded-[5px] px-3 py-1 font-bold shadow-none whitespace-nowrap opacity-100 mr-1"
               value={interest}
               onFocus={(el) => handleFocus(el, 'content')}
               onChange={(val) => {

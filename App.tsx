@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Download, Printer, Settings, Upload, RefreshCw, Edit3, Palette, FileText, Moon, Sun, Type, Undo2, Redo2, User } from 'lucide-react';
+import { Download, Printer, Settings, Upload, RefreshCw, Edit3, Palette, FileText, Moon, Sun, Type, Undo2, Redo2, User, Globe } from 'lucide-react';
 import Resume from './components/Resume';
 import ContentEditor from './components/ContentEditor';
 import { SectionManager } from './components/editor/SectionManager';
@@ -21,16 +21,18 @@ const DEFAULT_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 
 const HexColorPicker = ({ label, value, onChange }: { label: string, value: string, onChange: (val: string) => void }) => {
   const [textValue, setTextValue] = useState(value);
+  const prevValueRef = useRef(value);
 
-  // Sync text value if external value changes
-  useEffect(() => {
+  // Sync text input when value changes externally (e.g. theme preset applied)
+  // Uses render-phase update instead of useEffect to avoid the update-depth loop
+  if (prevValueRef.current !== value) {
+    prevValueRef.current = value;
     setTextValue(value);
-  }, [value]);
+  }
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVal = e.target.value;
     setTextValue(newVal);
-    // Only update actual color if valid hex
     if (/^#[0-9A-F]{6}$/i.test(newVal) || /^#[0-9A-F]{3}$/i.test(newVal)) {
       onChange(newVal);
     }
@@ -68,6 +70,103 @@ const HexColorPicker = ({ label, value, onChange }: { label: string, value: stri
   );
 };
 
+const translateResumeData = (data: ResumeData, targetLang: 'en' | 'pt'): ResumeData => {
+  const dup: ResumeData = JSON.parse(JSON.stringify(data));
+  dup.language = targetLang;
+  
+  const enDict: Record<string, string> = {
+    'presente': 'Present',
+    'actualidad': 'Present',
+    'nativo': 'Native',
+    'bilingüe': 'Bilingual',
+    'avanzado': 'Advanced',
+    'intermedio': 'Intermediate',
+    'básico': 'Basic',
+    'español': 'Spanish',
+    'inglés': 'English',
+    'portugués': 'Portuguese',
+    'enero': 'January',
+    'febrero': 'February',
+    'marzo': 'March',
+    'abril': 'April',
+    'mayo': 'May',
+    'junio': 'June',
+    'julio': 'July',
+    'agosto': 'August',
+    'septiembre': 'September',
+    'octubre': 'October',
+    'noviembre': 'November',
+    'diciembre': 'December',
+  };
+
+  const ptDict: Record<string, string> = {
+    'presente': 'Presente',
+    'actualidad': 'Presente',
+    'nativo': 'Nativo',
+    'bilingüe': 'Bilíngue',
+    'avanzado': 'Avançado',
+    'intermedio': 'Intermediário',
+    'básico': 'Básico',
+    'español': 'Espanhol',
+    'inglés': 'Inglês',
+    'portugués': 'Português',
+    'enero': 'Janeiro',
+    'febrero': 'Fevereiro',
+    'marzo': 'Março',
+    'abril': 'Abril',
+    'mayo': 'Maio',
+    'junio': 'Junho',
+    'julio': 'Julho',
+    'agosto': 'Agosto',
+    'septiembre': 'Setembro',
+    'octubre': 'Outubro',
+    'noviembre': 'Novembro',
+    'diciembre': 'Dezembro',
+  };
+
+  const dict = targetLang === 'en' ? enDict : ptDict;
+
+  const translateText = (text: string): string => {
+    if (!text) return text;
+    let translated = text.trim();
+    const lower = translated.toLowerCase();
+    if (dict[lower]) return dict[lower];
+    
+    // Replace case-insensitively and handle potential sub-words
+    Object.entries(dict).forEach(([key, val]) => {
+      const regex = new RegExp(`\\b${key}\\b`, 'gi');
+      translated = translated.replace(regex, val);
+    });
+    return translated;
+  };
+
+  if (dup.languages) {
+    dup.languages = dup.languages.map((l: any) => ({
+      ...l,
+      language: translateText(l.language),
+      level: translateText(l.level)
+    }));
+  }
+
+  if (dup.education) {
+    dup.education = dup.education.map((e: any) => ({
+      ...e,
+      period: translateText(e.period)
+    }));
+  }
+
+  if (dup.experience) {
+    dup.experience = dup.experience.map((e: any) => ({
+      ...e,
+      period: translateText(e.period),
+      companyDescription: e.companyDescription ? translateText(e.companyDescription) : undefined,
+      companyContact: e.companyContact ? translateText(e.companyContact) : undefined
+    }));
+  }
+
+  return dup;
+};
+
 const App: React.FC = () => {
   // Tabs: 'design' | 'content' | 'user'
   const [activeTab, setActiveTab] = useState<'design' | 'content' | 'user'>('design');
@@ -101,6 +200,8 @@ const App: React.FC = () => {
   const [contactBarColor, setContactBarColor] = useState<string>('#30101d');
   const [textColor, setTextColor] = useState<string>('#374151'); 
   const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg'>('base');
+  const [contactBarLayout, setContactBarLayout] = useState<'flex' | 'grid' | 'grid-2x2'>('flex');
+  const [fontFamily, setFontFamily] = useState<string>('Ubuntu');
 
   const [isSaving, setIsSaving] = useState(false);
   const [showSavedFeedback, setShowSavedFeedback] = useState(false);
@@ -194,6 +295,7 @@ const App: React.FC = () => {
         setContactBarColor(cleanData.visualSettings.contactBarColor);
         setTextColor(cleanData.visualSettings.textColor);
         setFontSize(cleanData.visualSettings.fontSize);
+        setContactBarLayout(cleanData.visualSettings.contactBarLayout || 'flex');
       }
       localStorage.setItem('cv_builder_currentId', active.id);
     };
@@ -215,7 +317,9 @@ const App: React.FC = () => {
           accentColor,
           contactBarColor,
           textColor,
-          fontSize
+          fontSize,
+          contactBarLayout,
+          fontFamily
         }
       };
       const updatedRecord = { ...active, data: updatedData };
@@ -243,7 +347,7 @@ const App: React.FC = () => {
     }, 2000); // Autosave after 2 seconds of inactivity
 
     return () => clearTimeout(timeoutId);
-  }, [resumeData, primaryColor, accentColor, contactBarColor, textColor, fontSize, currentId]);
+  }, [resumeData, primaryColor, accentColor, contactBarColor, textColor, fontSize, contactBarLayout, fontFamily, currentId]);
 
   // History Recording Effect
   useEffect(() => {
@@ -281,6 +385,19 @@ const App: React.FC = () => {
 
     return () => clearTimeout(timeout);
   }, [resumeData]);
+
+  useEffect(() => {
+    if (!fontFamily) return;
+    const linkId = 'dynamic-google-font';
+    let link = document.getElementById(linkId) as HTMLLinkElement;
+    if (!link) {
+      link = document.createElement('link');
+      link.id = linkId;
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+    }
+    link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, '+')}:ital,wght@0,300;0,400;0,500;0,700;0,900;1,300;1,400;1,500;1,700;1,900&display=swap`;
+  }, [fontFamily]);
 
   const undo = () => {
     if (historyIndex > 0) {
@@ -335,6 +452,7 @@ const App: React.FC = () => {
         setContactBarColor(cleanData.visualSettings.contactBarColor);
         setTextColor(cleanData.visualSettings.textColor);
         setFontSize(cleanData.visualSettings.fontSize);
+        setContactBarLayout(cleanData.visualSettings.contactBarLayout || 'flex');
       }
       localStorage.setItem('cv_builder_currentId', id);
     }
@@ -593,6 +711,55 @@ const App: React.FC = () => {
     }
   };
 
+  const handleTranslateCVMenu = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const source = allResumes.find(r => r.id === id);
+    if (!source) return;
+
+    openModal({
+      title: 'Traducir CV',
+      message: 'Selecciona el idioma para crear una copia de este currículum (sin sobreescribir el actual):',
+      type: 'select',
+      defaultValue: 'en',
+      confirmLabel: 'Crear Versión',
+      cancelLabel: 'Cancelar',
+      options: [
+        { value: 'en', label: 'Inglés (English)' },
+        { value: 'pt', label: 'Portugués (Português)' }
+      ],
+      onConfirm: async (lang) => {
+        if (lang === 'en' || lang === 'pt') {
+          const langSuffix = lang === 'en' ? 'Inglés' : 'Português';
+          const newName = `${source.name} (${langSuffix})`;
+          const newRec = await createNewResume(newName);
+          
+          // Translate the data
+          const translatedData = translateResumeData(source.data, lang);
+          newRec.data = translatedData;
+          
+          await saveResume(newRec);
+          setAllResumes(prev => [...prev, newRec]);
+          setCurrentId(newRec.id);
+          setResumeData(translatedData);
+          localStorage.setItem('cv_builder_currentId', newRec.id);
+          
+          if (translatedData.visualSettings) {
+            setPrimaryColor(translatedData.visualSettings.primaryColor);
+            setAccentColor(translatedData.visualSettings.accentColor);
+            setContactBarColor(translatedData.visualSettings.contactBarColor);
+            setTextColor(translatedData.visualSettings.textColor);
+            setFontSize(translatedData.visualSettings.fontSize || 'base');
+            setContactBarLayout(translatedData.visualSettings.contactBarLayout || 'flex');
+            setFontFamily(translatedData.visualSettings.fontFamily || 'Ubuntu');
+          }
+          
+          showToast(`Versión en ${langSuffix} creada con éxito.`, 'success');
+        }
+        closeModal();
+      }
+    });
+  };
+
   const handleStartEditing = (id: string, name: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingResumeId(id);
@@ -697,8 +864,9 @@ const App: React.FC = () => {
                 <Settings className="w-5 h-5 text-teal-500" />
               </div>
               <div>
-                <h2 className="text-lg font-black text-gray-800 dark:text-white leading-none tracking-tight">
+                <h2 className="text-lg font-black text-gray-800 dark:text-white leading-none tracking-tight flex items-center gap-2">
                   CV BUILDER
+                  <span className="text-[9px] font-bold bg-teal-500/20 text-teal-600 dark:text-teal-400 px-1.5 py-0.5 rounded-full uppercase tracking-wider">v1.2.0</span>
                 </h2>
                 <span className="text-[10px] font-bold text-teal-500 uppercase tracking-[0.2em] opacity-80">Workspace</span>
               </div>
@@ -749,7 +917,13 @@ const App: React.FC = () => {
               <SectionManager data={resumeData} updateField={updateField} />
 
               {/* Appearance Form */}
-              <AppearanceForm data={resumeData} updateField={updateField} updateFontSize={updateFontSize} />
+              <AppearanceForm 
+                data={resumeData} 
+                updateField={updateField} 
+                updateFontSize={updateFontSize} 
+                contactBarLayout={contactBarLayout}
+                setContactBarLayout={setContactBarLayout}
+              />
 
               {/* Color Controls */}
               <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
@@ -943,6 +1117,13 @@ const App: React.FC = () => {
                           <Copy size={12} />
                         </button>
                         <button 
+                          onClick={(e) => handleTranslateCVMenu(res.id, e)}
+                          className="p-1.5 text-gray-400 hover:text-teal-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm"
+                          title="Traducir / Idiomas"
+                        >
+                          <Globe size={12} />
+                        </button>
+                        <button 
                           onClick={(e) => handleDeleteResume(res.id, e)}
                           className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm"
                           title="Eliminar"
@@ -1048,16 +1229,6 @@ const App: React.FC = () => {
             </div>
             <span className="text-[8px] opacity-60 font-bold mt-2 tracking-[0.2em]">Imprimir / Diálogo del navegador</span>
           </button>
-           {/*<button>
-            onClick={handleDownloadPDF}
-            disabled={isExporting}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-black py-3 px-6 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 uppercase tracking-[0.1em] text-xs hover:scale-[1.02] active:scale-[0.98]"
-          >
-            {isExporting
-              ? <><RefreshCw size={14} className="animate-spin" /><span>Generando…</span></>
-              : <><Download size={14} /><span>Descargar PDF directo</span></>
-            }
-          </button>*/}
         </div>
         
       </aside>
@@ -1071,6 +1242,8 @@ const App: React.FC = () => {
           contactBarColor={contactBarColor}
           textColor={textColor}
           fontSize={fontSize}
+          contactBarLayout={contactBarLayout}
+          fontFamily={fontFamily}
           onChange={setResumeData}
         />
       </main>

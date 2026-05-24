@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useRef } from 'react';
+import React, { useState, useLayoutEffect, useRef, useEffect } from 'react';
 import { ResumeData } from '../types';
 import { ResumeHeader } from './resume/ResumeHeader';
 import { ExperienceSection } from './resume/ExperienceSection';
@@ -18,6 +18,8 @@ interface ResumeProps {
   contactBarColor: string;
   textColor: string;
   fontSize: 'sm' | 'base' | 'lg';
+  contactBarLayout?: 'flex' | 'grid' | 'grid-2x2';
+  fontFamily?: string;
   profileImage?: string;
   onChange: (data: ResumeData) => void;
 }
@@ -29,6 +31,8 @@ const Resume: React.FC<ResumeProps> = ({
   contactBarColor,
   textColor,
   fontSize,
+  contactBarLayout = 'flex',
+  fontFamily = 'Ubuntu',
   profileImage,
   onChange
 }) => {
@@ -43,8 +47,25 @@ const Resume: React.FC<ResumeProps> = ({
     left: 0
   });
 
+  const [activeFormats, setActiveFormats] = useState({
+    bold: false, italic: false, underline: false, justifyFull: false
+  });
+
   const [numPages, setNumPages] = useState(1);
   const firstPageInnerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateFormats = () => {
+      setActiveFormats({
+        bold: document.queryCommandState('bold'),
+        italic: document.queryCommandState('italic'),
+        underline: document.queryCommandState('underline'),
+        justifyFull: document.queryCommandState('justifyFull'),
+      });
+    };
+    document.addEventListener('selectionchange', updateFormats);
+    return () => document.removeEventListener('selectionchange', updateFormats);
+  }, []);
 
   useLayoutEffect(() => {
     const el = firstPageInnerRef.current;
@@ -66,13 +87,36 @@ const Resume: React.FC<ResumeProps> = ({
     const rect = el.getBoundingClientRect();
     setToolbarState({
       show: true,
-      top: rect.top - 48,
-      left: rect.left + rect.width / 2 - 100,
+      top: rect.top - 52,
+      left: rect.left + rect.width / 2 - 140,
       activeField: field
     });
   };
 
   const execCommand = (cmd: string) => {
+    if (cmd === 'justifyLeft' || cmd === 'justifyFull') {
+      const focused = document.activeElement as HTMLElement | null;
+      if (focused?.isContentEditable) {
+        // For inline elements (e.g. <span> inside <li>), walk up to nearest block
+        let target: HTMLElement = focused;
+        const display = getComputedStyle(target).display;
+        if (display === 'inline' || display === 'inline-block') {
+          let el: HTMLElement | null = target.parentElement;
+          while (el) {
+            const d = getComputedStyle(el).display;
+            if (d === 'block' || d === 'list-item' || d === 'table-cell') {
+              target = el;
+              break;
+            }
+            if (el.id === 'resume-wrapper') break;
+            el = el.parentElement;
+          }
+        }
+        target.style.textAlign = cmd === 'justifyFull' ? 'justify' : 'left';
+        setActiveFormats(prev => ({ ...prev, justifyFull: cmd === 'justifyFull' }));
+      }
+      return;
+    }
     document.execCommand(cmd, false);
   };
 
@@ -90,13 +134,13 @@ const Resume: React.FC<ResumeProps> = ({
     }
   };
 
-  const sectionMap: Record<string, () => React.ReactNode> = {
-    education: () => <EducationSection data={data} handleFocus={handleFocus} accentColor={accentColor} onChange={onChange} />,
-    experience: () => <ExperienceSection data={data} handleFocus={handleFocus} accentColor={accentColor} onChange={onChange} />,
-    skills: () => <SkillsSection data={data} handleFocus={handleFocus} accentColor={accentColor} primaryColor={primaryColor} onChange={onChange} />,
-    courses: () => <CoursesSection data={data} handleFocus={handleFocus} accentColor={accentColor} onChange={onChange} />,
-    languages: () => <LanguagesSection data={data} handleFocus={handleFocus} accentColor={accentColor} onChange={onChange} />,
-    interests: () => <InterestsSection data={data} handleFocus={handleFocus} accentColor={accentColor} onChange={onChange} />
+  const sectionMap: Record<string, React.FC<any>> = {
+    education: EducationSection,
+    experience: ExperienceSection,
+    skills: SkillsSection,
+    courses: CoursesSection,
+    languages: LanguagesSection,
+    interests: InterestsSection
   };
 
   const layout = data.columnLayout || {
@@ -105,41 +149,86 @@ const Resume: React.FC<ResumeProps> = ({
   };
 
   const hidden = data.hiddenSections || [];
-  const leftSections = layout.left.filter(s => !hidden.includes(s));
-  const rightSections = layout.right.filter(s => !hidden.includes(s));
+  const knownSections = Object.keys(sectionMap);
+  const leftSections = layout.left.filter(s => knownSections.includes(s) && !hidden.includes(s));
+  const rightSections = layout.right.filter(s => knownSections.includes(s) && !hidden.includes(s));
+
+  const updateLineHeight = (delta: number) => {
+    if (!toolbarState.activeField) return;
+    const currentLines = data.lineHeights || {
+      name: 1.2, title: 1.5, summary: 1.6, sectionHeaders: 1.4, content: 1.5, contact: 1.5
+    };
+    const current = currentLines[toolbarState.activeField] || 1.5;
+    const newSize = Math.max(0.5, Math.min(3.0, current + delta));
+    onChange({
+      ...data,
+      lineHeights: {
+        ...currentLines,
+        [toolbarState.activeField]: newSize
+      }
+    });
+  };
 
   const resumeBody = (
-    <>
+    <div style={{ fontFamily: `"${fontFamily}", sans-serif` }}>
       <ResumeHeader
         data={data}
         fontSizes={data.fontSizes}
         primaryColor={primaryColor}
         accentColor={accentColor}
         contactBarColor={contactBarColor}
+        contactBarLayout={contactBarLayout}
         profileImage={profileImage}
         handleFocus={handleFocus}
         onChange={onChange}
       />
       <main
         className={`p-10 pt-6 flex-1 ${
-          data.columnStyle === 'single' ? 'flex flex-col gap-y-10' : 'grid gap-x-12'
+          data.columnStyle === 'single' ? 'flex flex-col gap-y-10' : 'grid'
         }`}
         style={{
+          fontFamily: `"${fontFamily}", sans-serif`,
           gridTemplateColumns: data.columnStyle === 'side-left' ? '240px 1fr' :
                                data.columnStyle === 'side-right' ? '1fr 240px' :
                                data.columnStyle === 'balanced' ? '1fr 1fr' : undefined
         }}
       >
         <div className="space-y-6">
-          {(data.columnStyle === 'single' ? [...leftSections, ...rightSections] : leftSections).map(sectionId => sectionMap[sectionId]?.())}
+          {(data.columnStyle === 'single' ? [...new Set([...leftSections, ...rightSections])] : leftSections).map((sectionId, index) => {
+            const Component = sectionMap[sectionId];
+            if (!Component) return null;
+            return (
+              <Component
+                key={`${sectionId}-left-${index}`}
+                data={data}
+                handleFocus={handleFocus}
+                accentColor={accentColor}
+                primaryColor={primaryColor}
+                onChange={onChange}
+              />
+            );
+          })}
         </div>
         {data.columnStyle !== 'single' && (
           <div className="space-y-6">
-            {rightSections.map(sectionId => sectionMap[sectionId]?.())}
+            {rightSections.map((sectionId, index) => {
+              const Component = sectionMap[sectionId];
+              if (!Component) return null;
+              return (
+                <Component
+                  key={`${sectionId}-right-${index}`}
+                  data={data}
+                  handleFocus={handleFocus}
+                  accentColor={accentColor}
+                  primaryColor={primaryColor}
+                  onChange={onChange}
+                />
+              );
+            })}
           </div>
         )}
       </main>
-    </>
+    </div>
   );
 
   const scaleClass = fontSize === 'sm' ? 'scale-90 origin-top' : fontSize === 'lg' ? 'scale-105 origin-top' : '';
@@ -156,10 +245,14 @@ const Resume: React.FC<ResumeProps> = ({
         left={toolbarState.left}
         onExecCommand={execCommand}
         onUpdateFontSize={updateFontSize}
+        onUpdateLineHeight={updateLineHeight}
+        currentFontSize={toolbarState.activeField ? data.fontSizes[toolbarState.activeField] : 12}
+        currentLineHeight={toolbarState.activeField ? (data.lineHeights?.[toolbarState.activeField] ?? 1.5) : 1.5}
+        activeFormats={activeFormats}
       />
 
       {Array.from({ length: numPages }).map((_, pageIndex) => (
-        <React.Fragment key={pageIndex}>
+        <React.Fragment key={`page-${pageIndex}`}>
           {pageIndex > 0 && (
             <div
               className="flex items-center gap-3 print:hidden"
