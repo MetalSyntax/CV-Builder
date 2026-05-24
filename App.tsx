@@ -15,6 +15,7 @@ import {
 import { Plus, Trash2, FolderOpen, Copy, Save, Check, XCircle } from 'lucide-react';
 import { ToastContainer, ToastType } from './components/common/Toast';
 import { Modal } from './components/common/Modal';
+import { CVScore } from './components/CVScore';
 
 // Icono de usuario gris para imagen por defecto (SVG Data URL)
 const DEFAULT_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239ca3af'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'%3E%3C/path%3E%3C/svg%3E";
@@ -296,6 +297,7 @@ const App: React.FC = () => {
         setTextColor(cleanData.visualSettings.textColor);
         setFontSize(cleanData.visualSettings.fontSize);
         setContactBarLayout(cleanData.visualSettings.contactBarLayout || 'flex');
+        if (cleanData.visualSettings.fontFamily) setFontFamily(cleanData.visualSettings.fontFamily);
       }
       localStorage.setItem('cv_builder_currentId', active.id);
     };
@@ -453,6 +455,7 @@ const App: React.FC = () => {
         setTextColor(cleanData.visualSettings.textColor);
         setFontSize(cleanData.visualSettings.fontSize);
         setContactBarLayout(cleanData.visualSettings.contactBarLayout || 'flex');
+        setFontFamily(cleanData.visualSettings?.fontFamily || 'Ubuntu');
       }
       localStorage.setItem('cv_builder_currentId', id);
     }
@@ -508,7 +511,9 @@ const App: React.FC = () => {
     const firstFrame = document.querySelector<HTMLElement>('.resume-page-frame');
     if (!firstFrame) return;
 
-    const PAGE_H = 1056;
+    const pageFormat = resumeData.pageFormat || 'Letter';
+    const PAGE_H = pageFormat === 'A4' ? 1122 : 1056;
+    const pdfFormat = pageFormat === 'A4' ? 'a4' : 'letter';
 
     try {
       setIsExporting(true);
@@ -573,7 +578,7 @@ const App: React.FC = () => {
       const pdfPageHeightPx = PAGE_H * 2; // matches scale: 2
       const numPdfPages = Math.max(1, Math.ceil(canvas.height / pdfPageHeightPx));
 
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter', compress: true });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: pdfFormat, compress: true });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
@@ -866,7 +871,7 @@ const App: React.FC = () => {
               <div>
                 <h2 className="text-lg font-black text-gray-800 dark:text-white leading-none tracking-tight flex items-center gap-2">
                   CV BUILDER
-                  <span className="text-[9px] font-bold bg-teal-500/20 text-teal-600 dark:text-teal-400 px-1.5 py-0.5 rounded-full uppercase tracking-wider">v1.2.0</span>
+                  <span className="text-[9px] font-bold bg-teal-500/20 text-teal-600 dark:text-teal-400 px-1.5 py-0.5 rounded-full uppercase tracking-wider">v2.0</span>
                 </h2>
                 <span className="text-[10px] font-bold text-teal-500 uppercase tracking-[0.2em] opacity-80">Workspace</span>
               </div>
@@ -917,12 +922,14 @@ const App: React.FC = () => {
               <SectionManager data={resumeData} updateField={updateField} />
 
               {/* Appearance Form */}
-              <AppearanceForm 
-                data={resumeData} 
-                updateField={updateField} 
-                updateFontSize={updateFontSize} 
+              <AppearanceForm
+                data={resumeData}
+                updateField={updateField}
+                updateFontSize={updateFontSize}
                 contactBarLayout={contactBarLayout}
                 setContactBarLayout={setContactBarLayout}
+                fontFamily={fontFamily}
+                setFontFamily={setFontFamily}
               />
 
               {/* Color Controls */}
@@ -996,6 +1003,9 @@ const App: React.FC = () => {
                   })}
                 </div>
               </div>
+
+              {/* CV Score */}
+              <CVScore data={resumeData} />
 
               {/* Profile Image Control */}
               <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
@@ -1229,6 +1239,17 @@ const App: React.FC = () => {
             </div>
             <span className="text-[8px] opacity-60 font-bold mt-2 tracking-[0.2em]">Imprimir / Diálogo del navegador</span>
           </button>
+          <button
+            onClick={handleDownloadPDF}
+            disabled={isExporting}
+            className="w-full bg-zinc-800 dark:bg-zinc-700 hover:bg-zinc-700 dark:hover:bg-zinc-600 text-white font-black py-3 px-6 rounded-2xl transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest disabled:opacity-50"
+          >
+            {isExporting ? (
+              <><RefreshCw size={14} className="animate-spin" /> Generando...</>
+            ) : (
+              <><Download size={14} /> Descargar PDF Directo</>
+            )}
+          </button>
         </div>
         
       </aside>
@@ -1253,7 +1274,7 @@ const App: React.FC = () => {
         <button 
           onClick={undo}
           disabled={historyIndex <= 0}
-          className="p-3 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+          className="p-4 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
           title="Deshacer"
         >
           <Undo2 size={20} className="group-active:-translate-x-1 transition-transform" />
@@ -1261,7 +1282,7 @@ const App: React.FC = () => {
         <button 
           onClick={redo}
           disabled={historyIndex >= history.length - 1}
-          className="p-3 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+          className="p-4 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
           title="Rehacer"
         >
           <Redo2 size={20} className="group-active:translate-x-1 transition-transform" />

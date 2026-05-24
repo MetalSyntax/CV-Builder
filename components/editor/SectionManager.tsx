@@ -13,10 +13,12 @@ export const SectionManager: React.FC<SectionManagerProps> = ({
   updateField
 }) => {
   const defaultLeft = ['experience', 'education'];
-  const defaultRight = ['skills', 'courses', 'languages', 'interests'];
+  const defaultRight = ['skills', 'courses', 'languages', 'interests', 'projects'];
 
   const [draggedSection, setDraggedSection] = useState<string | null>(null);
   const [draggedSourceCol, setDraggedSourceCol] = useState<'left' | 'right' | null>(null);
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState<string>('');
 
   const toggleSectionVisibility = (section: string) => {
     const hidden = data.hiddenSections || [];
@@ -109,7 +111,8 @@ export const SectionManager: React.FC<SectionManagerProps> = ({
       skills: 'Habilidades',
       courses: 'Cursos',
       languages: 'Idiomas',
-      interests: 'Intereses'
+      interests: 'Intereses',
+      projects: 'Proyectos',
     };
 
     return (
@@ -131,9 +134,40 @@ export const SectionManager: React.FC<SectionManagerProps> = ({
           onDragEnd={!isHidden ? () => { setDraggedSection(null); setDraggedSourceCol(null); } : undefined}
         >
           {!isHidden && <GripVertical size={14} className="text-gray-300 group-hover:text-teal-500 transition-colors flex-shrink-0" />}
-          <span className={`text-[11px] font-black uppercase tracking-wider truncate ${isHidden ? 'text-gray-400' : 'text-gray-700 dark:text-zinc-300'}`}>
-            {labels[section]}
-          </span>
+          {editingSection === section ? (
+            <div className="flex items-center gap-1 flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
+              <input
+                autoFocus
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                onBlur={() => {
+                  if (editingName.trim()) {
+                    updateField('sectionNames', { ...(data.sectionNames || {}), [section]: editingName.trim() });
+                  }
+                  setEditingSection(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (editingName.trim()) updateField('sectionNames', { ...(data.sectionNames || {}), [section]: editingName.trim() });
+                    setEditingSection(null);
+                  }
+                  if (e.key === 'Escape') setEditingSection(null);
+                }}
+                className="flex-1 min-w-0 text-[11px] font-black bg-white dark:bg-zinc-800 border border-teal-500 rounded px-1.5 py-0.5 text-teal-600 outline-none uppercase tracking-wide"
+              />
+            </div>
+          ) : (
+            <span
+              className={`text-[11px] font-black uppercase tracking-wider truncate ${isHidden ? 'text-gray-400' : 'text-gray-700 dark:text-zinc-300'}`}
+              onDoubleClick={() => {
+                setEditingSection(section);
+                setEditingName((data.sectionNames || {})[section] || labels[section] || section);
+              }}
+              title="Doble clic para renombrar"
+            >
+              {(data.sectionNames || {})[section] || labels[section] || section}
+            </span>
+          )}
         </div>
         <button
           type="button"
@@ -179,6 +213,39 @@ export const SectionManager: React.FC<SectionManagerProps> = ({
           </div>
         </div>
       </div>
+      {(data.customSections || []).length > 0 && (
+        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-zinc-800">
+          <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] pl-1 block mb-2">Secciones Personalizadas</label>
+          <div className="space-y-1.5">
+            {(data.customSections || []).map(cs => {
+              const sectionId = `custom-${cs.id}`;
+              const inLayout = [...(data.columnLayout?.left || []), ...(data.columnLayout?.right || [])].includes(sectionId);
+              return (
+                <div key={cs.id} className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800">
+                  <span className="text-[11px] font-bold text-gray-600 dark:text-zinc-400 truncate">{cs.title}</span>
+                  <button
+                    onClick={() => {
+                      const left = [...(data.columnLayout?.left || ['experience', 'education'])];
+                      const right = [...(data.columnLayout?.right || ['skills', 'courses', 'languages', 'interests'])];
+                      if (inLayout) {
+                        const newLeft = left.filter(s => s !== sectionId);
+                        const newRight = right.filter(s => s !== sectionId);
+                        updateField('columnLayout', { left: newLeft, right: newRight });
+                      } else {
+                        right.push(sectionId);
+                        updateField('columnLayout', { left, right });
+                      }
+                    }}
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors ${inLayout ? 'bg-teal-500/10 text-teal-600 hover:bg-red-50 hover:text-red-500' : 'bg-gray-100 dark:bg-zinc-800 text-gray-400 hover:bg-teal-500/10 hover:text-teal-600'}`}
+                  >
+                    {inLayout ? 'Quitar' : 'Añadir'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </EditorFormSection>
   );
 };

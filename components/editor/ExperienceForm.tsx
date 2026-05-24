@@ -129,7 +129,8 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({
                 ${exp.hidden
                   ? 'bg-amber-50/30 dark:bg-amber-900/5 border-dashed border-amber-200 dark:border-amber-800/40'
                   : 'bg-gray-50/50 dark:bg-zinc-950/50 border-gray-100 dark:border-zinc-800'
-                }`}
+                }
+                ${exp.avoidBreak ? 'print:break-inside-avoid' : ''}`}
             >
               {/* Header row - always visible */}
               <div
@@ -165,6 +166,14 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({
                       title={exp.hidden ? 'Mostrar en CV' : 'Ocultar del CV'}
                     >
                       {exp.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                    <div className="w-px h-3 bg-gray-200 dark:bg-zinc-700 mx-0.5"></div>
+                    <button
+                      onClick={() => updateItem('experience', idx, 'avoidBreak', !exp.avoidBreak)}
+                      className={`p-1.5 transition-colors text-[8px] font-black ${exp.avoidBreak ? 'text-teal-500 bg-teal-50 dark:bg-teal-900/20' : 'text-gray-300 hover:text-teal-500'}`}
+                      title={exp.avoidBreak ? 'Permitir corte de página' : 'Evitar corte de página'}
+                    >
+                      ↕
                     </button>
                     <div className="w-px h-3 bg-gray-200 dark:bg-zinc-700 mx-0.5"></div>
                     <button onClick={() => removeItem('experience', idx)} className="p-1.5 text-gray-400 hover:text-red-500">

@@ -18,5 +18,15 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "."),
       },
     },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: ['./tests/setup.ts'],
+      include: ['tests/**/*.{test,spec}.{ts,tsx}'],
+      exclude: ['cypress/**/*', 'node_modules/**/*'],
+      pool: 'vmThreads',
+      testTimeout: 60000,
+      workerIdleTimeout: 60000,
+    },
   };
 });

@@ -3,11 +3,12 @@ export const formatDate = (dateStr: string, format: string): string => {
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) return dateStr;
 
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
+  // Use UTC methods so YYYY-MM-DD strings (parsed as UTC midnight) don't shift to the previous day
+  const year = date.getUTCFullYear();
+  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+  const day = date.getUTCDate().toString().padStart(2, '0');
   const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  const monthName = monthNames[date.getMonth()];
+  const monthName = monthNames[date.getUTCMonth()];
 
   switch (format) {
     case 'MM/YYYY': return `${month}/${year}`;

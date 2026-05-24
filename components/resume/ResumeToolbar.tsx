@@ -7,9 +7,7 @@ interface ResumeToolbarProps {
   left: number;
   onExecCommand: (cmd: string) => void;
   onUpdateFontSize: (delta: number) => void;
-  onUpdateLineHeight: (delta: number) => void;
-  currentFontSize: number;
-  currentLineHeight: number;
+  currentFontSize?: number;
   activeFormats: { bold: boolean; italic: boolean; underline: boolean; justifyFull: boolean };
 }
 
@@ -19,9 +17,7 @@ export const ResumeToolbar: React.FC<ResumeToolbarProps> = ({
   left,
   onExecCommand,
   onUpdateFontSize,
-  onUpdateLineHeight,
-  currentFontSize,
-  currentLineHeight,
+  currentFontSize = 12,
   activeFormats,
 }) => {
   if (!show) return null;
@@ -85,7 +81,9 @@ export const ResumeToolbar: React.FC<ResumeToolbarProps> = ({
       >
         A−
       </button>
-      <span className="text-[10px] font-bold text-white/90 px-1">{currentFontSize}</span>
+      <span className="text-[10px] font-bold text-white/90 w-6 text-center tabular-nums">
+        {currentFontSize}
+      </span>
       <button
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => onUpdateFontSize(1)}
@@ -93,26 +91,6 @@ export const ResumeToolbar: React.FC<ResumeToolbarProps> = ({
         className="px-2 py-1 rounded text-[10px] font-bold text-white/70 hover:bg-white/10 hover:text-white transition-colors"
       >
         A+
-      </button>
-
-      <div className="w-px h-4 bg-white/20 mx-1 flex-shrink-0" />
-
-      <button
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => onUpdateLineHeight(-0.1)}
-        title="Reducir interlineado"
-        className="px-2 py-1 rounded text-[10px] font-bold text-white/70 hover:bg-white/10 hover:text-white transition-colors"
-      >
-        ↕−
-      </button>
-      <span className="text-[10px] font-bold text-white/90 px-1">{currentLineHeight.toFixed(1)}</span>
-      <button
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => onUpdateLineHeight(0.1)}
-        title="Aumentar interlineado"
-        className="px-2 py-1 rounded text-[10px] font-bold text-white/70 hover:bg-white/10 hover:text-white transition-colors"
-      >
-        ↕+
       </button>
     </div>
   );

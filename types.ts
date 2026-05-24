@@ -5,6 +5,7 @@ export interface EducationItem {
   location: string;
   hidden?: boolean;
   collapsed?: boolean;
+  avoidBreak?: boolean;
 }
 
 export interface ExperienceItem {
@@ -17,7 +18,7 @@ export interface ExperienceItem {
   companyDescription?: string;
   companyContact?: string;
   archivedTasks?: string[];
-  collapsed?: boolean;
+  avoidBreak?: boolean;
 }
 
 export interface CourseItem {
@@ -25,7 +26,30 @@ export interface CourseItem {
   date: string;
   provider: string;
   hidden?: boolean;
-  collapsed?: boolean;
+}
+
+export interface ProjectItem {
+  title: string;
+  description: string;
+  githubUrl?: string;
+  demoUrl?: string;
+  technologies: string[];
+  hidden?: boolean;
+}
+
+export interface CustomSectionItem {
+  title?: string;
+  description?: string;
+  date?: string;
+  location?: string;
+  hidden?: boolean;
+}
+
+export interface CustomSection {
+  id: string;
+  title: string;
+  items: CustomSectionItem[];
+  hidden?: boolean;
 }
 
 export interface ResumeData {
@@ -51,6 +75,8 @@ export interface ResumeData {
   hiddenSkills?: number[];
   hiddenInterests?: number[];
   interests: string[];
+  projects?: ProjectItem[];
+  customSections?: CustomSection[];
   fontSizes: {
     name: number;
     title: number;
@@ -84,7 +110,11 @@ export interface ResumeData {
   };
   columnStyle?: 'balanced' | 'side-left' | 'side-right' | 'single';
   sectionStyle?: 'modern' | 'classic' | 'elegant';
+  sectionNames?: Record<string, string>;
   dateFormat?: string;
   dateRangeSeparator?: string;
   taskLineHeight?: number;
+  pageFormat?: 'A4' | 'Letter';
+  pageMargin?: 'compact' | 'normal' | 'wide';
+  template?: 'modern' | 'executive' | 'timeline';
 }

@@ -7,6 +7,8 @@ import { CoursesForm } from './editor/CoursesForm';
 import { LanguagesForm } from './editor/LanguagesForm';
 import { SkillsForm } from './editor/SkillsForm';
 import { InterestsForm } from './editor/InterestsForm';
+import { ProjectsForm } from './editor/ProjectsForm';
+import { CustomSectionForm } from './editor/CustomSectionForm';
 
 interface ContentEditorProps {
   data: ResumeData;
@@ -94,12 +96,15 @@ const ContentEditor: React.FC<ContentEditorProps> = ({ data, onChange, onMoveIte
         updateField={updateField} 
       />
 
-      <InterestsForm 
-        data={data} 
-        onChange={onChange} 
-        addItem={addItem} 
-        updateField={updateField} 
+      <InterestsForm
+        data={data}
+        onChange={onChange}
+        addItem={addItem}
+        updateField={updateField}
       />
+
+      <ProjectsForm data={data} onChange={onChange} />
+      <CustomSectionForm data={data} onChange={onChange} />
     </div>
   );
 };

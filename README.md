@@ -1,4 +1,4 @@
-# 📄 CV-Builder v1.2.0
+# 📄 CV-Builder v2.0.0
 
 A premium, state-of-the-art curriculum vitae builder designed for professionals who value both design and efficiency. Create high-end, ATS-ready resumes with real-time preview and intuitive local management.
 

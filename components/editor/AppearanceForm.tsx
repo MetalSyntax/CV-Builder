@@ -1,5 +1,5 @@
 import React from 'react';
-import { Type, Palette, Layout, Minus, Plus, Calendar } from 'lucide-react';
+import { Type, Palette, Layout, Minus, Plus, Calendar, FileText } from 'lucide-react';
 import { ResumeData } from '../../types';
 import { EditorFormSection } from './EditorFormSection';
 import { CustomSelect } from '../common/CustomSelect';
@@ -10,6 +10,8 @@ interface AppearanceFormProps {
   updateFontSize: (field: keyof ResumeData['fontSizes'], value: number) => void;
   contactBarLayout: 'flex' | 'grid' | 'grid-2x2';
   setContactBarLayout: (val: 'flex' | 'grid' | 'grid-2x2') => void;
+  fontFamily: string;
+  setFontFamily: (val: string) => void;
 }
 
 export const AppearanceForm: React.FC<AppearanceFormProps> = ({
@@ -17,7 +19,9 @@ export const AppearanceForm: React.FC<AppearanceFormProps> = ({
   updateField,
   updateFontSize,
   contactBarLayout,
-  setContactBarLayout
+  setContactBarLayout,
+  fontFamily,
+  setFontFamily,
 }) => {
   const FontSizeControl = ({ label, value, field }: { label: string, value: number, field: keyof ResumeData['fontSizes'] }) => (
     <div className="flex items-center justify-between gap-3 mt-1.5 p-1 bg-white dark:bg-zinc-900/30 rounded-md border border-gray-100 dark:border-zinc-800/50 shadow-sm">
@@ -47,6 +51,23 @@ export const AppearanceForm: React.FC<AppearanceFormProps> = ({
       </div>
     </div>
   );
+
+  const templateOptions = [
+    { value: 'modern', label: 'Modern (Actual)' },
+    { value: 'executive', label: 'Executive Slate' },
+    { value: 'timeline', label: 'Minimalist Timeline' },
+  ];
+
+  const pageFormatOptions = [
+    { value: 'Letter', label: 'Letter (EE.UU.)' },
+    { value: 'A4', label: 'A4 (Internacional)' },
+  ];
+
+  const pageMarginOptions = [
+    { value: 'compact', label: 'Compacto (16px)' },
+    { value: 'normal', label: 'Normal (40px)' },
+    { value: 'wide', label: 'Ancho (56px)' },
+  ];
 
   const columnOptions = [
     { value: 'balanced', label: 'Equilibrado (2 Col)' },
@@ -84,19 +105,45 @@ export const AppearanceForm: React.FC<AppearanceFormProps> = ({
 
   const fontOptions = [
     { value: 'Ubuntu', label: 'Ubuntu' },
-    { value: 'Inter', label: 'Inter' },
     { value: 'Roboto', label: 'Roboto' },
     { value: 'Open Sans', label: 'Open Sans' },
     { value: 'Lato', label: 'Lato' },
     { value: 'Montserrat', label: 'Montserrat' },
-    { value: 'Poppins', label: 'Poppins' },
-    { value: 'Playfair Display', label: 'Playfair Display' },
+    { value: 'Raleway', label: 'Raleway' },
     { value: 'Merriweather', label: 'Merriweather' },
-    { value: 'Lora', label: 'Lora' }
+    { value: 'Playfair Display', label: 'Playfair Display' },
   ];
 
   return (
     <>
+      <EditorFormSection title="Plantilla y Página" subtitle="Diseño y formato del documento" icon={Layout}>
+        <div className="space-y-4">
+          <CustomSelect
+            label="Plantilla"
+            icon={<Palette size={10} />}
+            value={data.template || 'modern'}
+            options={templateOptions}
+            onChange={(val) => updateField('template', val)}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <CustomSelect
+              label="Formato"
+              icon={<FileText size={10} />}
+              value={data.pageFormat || 'Letter'}
+              options={pageFormatOptions}
+              onChange={(val) => updateField('pageFormat', val)}
+            />
+            <CustomSelect
+              label="Márgenes"
+              icon={<Layout size={10} />}
+              value={data.pageMargin || 'normal'}
+              options={pageMarginOptions}
+              onChange={(val) => updateField('pageMargin', val)}
+            />
+          </div>
+        </div>
+      </EditorFormSection>
+
       <EditorFormSection title="Distribución y Estilo" subtitle="Personaliza la estructura visual" icon={Palette}>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -141,21 +188,25 @@ export const AppearanceForm: React.FC<AppearanceFormProps> = ({
               options={contactBarOptions} 
               onChange={(val) => setContactBarLayout(val as 'flex' | 'grid' | 'grid-2x2')} 
             />
-            <CustomSelect 
-              label="Fuente del CV" 
-              icon={<Type size={10} />} 
-              value={data.visualSettings?.fontFamily || 'Ubuntu'} 
-              options={fontOptions} 
-              onChange={(val) => {
-                const newSettings = { ...(data.visualSettings || { primaryColor: '', accentColor: '', contactBarColor: '', textColor: '', fontSize: 'base' as const }), fontFamily: val };
-                updateField('visualSettings', newSettings);
-              }} 
+            <CustomSelect
+              label="Fuente del CV"
+              icon={<Type size={10} />}
+              value={fontFamily}
+              options={fontOptions}
+              onChange={setFontFamily}
             />
           </div>
         </div>
       </EditorFormSection>
 
       <EditorFormSection title="Tipografía y Tamaños" icon={Type} subtitle="Ajusta la escala de lectura">
+        <CustomSelect
+          label="Fuente"
+          icon={<Type size={10} />}
+          value={fontFamily}
+          options={fontOptions}
+          onChange={setFontFamily}
+        />
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
           <FontSizeControl label="Nombre" value={data.fontSizes.name} field="name" />
           <FontSizeControl label="Título" value={data.fontSizes.title} field="title" />

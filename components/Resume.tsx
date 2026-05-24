@@ -7,9 +7,22 @@ import { SkillsSection } from './resume/SkillsSection';
 import { CoursesSection } from './resume/CoursesSection';
 import { LanguagesSection } from './resume/LanguagesSection';
 import { InterestsSection } from './resume/InterestsSection';
+import { ProjectsSection } from './resume/ProjectsSection';
+import { CustomSectionDisplay } from './resume/CustomSection';
 import { ResumeToolbar } from './resume/ResumeToolbar';
+import { ExecutiveTemplate } from './resume/templates/ExecutiveTemplate';
+import { TimelineTemplate } from './resume/templates/TimelineTemplate';
 
-const PAGE_HEIGHT = 1056;
+const getPageDimensions = (format?: 'A4' | 'Letter') => {
+  if (format === 'A4') return { width: 794, height: 1122 };
+  return { width: 816, height: 1056 };
+};
+
+const getMarginPx = (margin?: 'compact' | 'normal' | 'wide') => {
+  if (margin === 'compact') return 16;
+  if (margin === 'wide') return 56;
+  return 40;
+};
 
 interface ResumeProps {
   data: ResumeData;
@@ -19,8 +32,8 @@ interface ResumeProps {
   textColor: string;
   fontSize: 'sm' | 'base' | 'lg';
   contactBarLayout?: 'flex' | 'grid' | 'grid-2x2';
-  fontFamily?: string;
   profileImage?: string;
+  fontFamily?: string;
   onChange: (data: ResumeData) => void;
 }
 
@@ -32,8 +45,8 @@ const Resume: React.FC<ResumeProps> = ({
   textColor,
   fontSize,
   contactBarLayout = 'flex',
-  fontFamily = 'Ubuntu',
   profileImage,
+  fontFamily,
   onChange
 }) => {
   const [toolbarState, setToolbarState] = useState<{
@@ -54,6 +67,9 @@ const Resume: React.FC<ResumeProps> = ({
   const [numPages, setNumPages] = useState(1);
   const firstPageInnerRef = useRef<HTMLDivElement>(null);
 
+  const { width: PAGE_W, height: PAGE_H } = getPageDimensions(data.pageFormat);
+  const marginPx = getMarginPx(data.pageMargin);
+
   useEffect(() => {
     const updateFormats = () => {
       setActiveFormats({
@@ -72,8 +88,7 @@ const Resume: React.FC<ResumeProps> = ({
     if (!el) return;
 
     const measure = () => {
-      // Subtract 1px to prevent browser sub-pixel rounding from triggering an extra empty page
-      setNumPages(Math.max(1, Math.ceil((el.scrollHeight - 8) / PAGE_HEIGHT)));
+      setNumPages(Math.max(1, Math.ceil((el.scrollHeight - 8) / PAGE_H)));
     };
 
     measure();
@@ -81,7 +96,7 @@ const Resume: React.FC<ResumeProps> = ({
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [PAGE_H]);
 
   const handleFocus = (el: HTMLElement, field: keyof ResumeData['fontSizes']) => {
     const rect = el.getBoundingClientRect();
@@ -97,7 +112,6 @@ const Resume: React.FC<ResumeProps> = ({
     if (cmd === 'justifyLeft' || cmd === 'justifyFull') {
       const focused = document.activeElement as HTMLElement | null;
       if (focused?.isContentEditable) {
-        // For inline elements (e.g. <span> inside <li>), walk up to nearest block
         let target: HTMLElement = focused;
         const display = getComputedStyle(target).display;
         if (display === 'inline' || display === 'inline-block') {
@@ -134,43 +148,119 @@ const Resume: React.FC<ResumeProps> = ({
     }
   };
 
+  // Build section map (includes custom sections dynamically)
+  const customSectionMap: Record<string, React.FC<any>> = {};
+  (data.customSections || []).forEach(section => {
+    const sectionId = `custom-${section.id}`;
+    customSectionMap[sectionId] = (props: any) => (
+      <CustomSectionDisplay
+        data={props.data}
+        section={section}
+        handleFocus={props.handleFocus}
+        accentColor={props.accentColor}
+        onChange={props.onChange}
+      />
+    );
+  });
+
   const sectionMap: Record<string, React.FC<any>> = {
     education: EducationSection,
     experience: ExperienceSection,
     skills: SkillsSection,
     courses: CoursesSection,
     languages: LanguagesSection,
-    interests: InterestsSection
-  };
-
-  const layout = data.columnLayout || {
-    left: ['experience', 'education'],
-    right: ['skills', 'courses', 'languages', 'interests']
+    interests: InterestsSection,
+    projects: ProjectsSection,
+    ...customSectionMap,
   };
 
   const hidden = data.hiddenSections || [];
   const knownSections = Object.keys(sectionMap);
-  const leftSections = layout.left.filter(s => knownSections.includes(s) && !hidden.includes(s));
-  const rightSections = layout.right.filter(s => knownSections.includes(s) && !hidden.includes(s));
 
-  const updateLineHeight = (delta: number) => {
-    if (!toolbarState.activeField) return;
-    const currentLines = data.lineHeights || {
-      name: 1.2, title: 1.5, summary: 1.6, sectionHeaders: 1.4, content: 1.5, contact: 1.5
-    };
-    const current = currentLines[toolbarState.activeField] || 1.5;
-    const newSize = Math.max(0.5, Math.min(3.0, current + delta));
-    onChange({
-      ...data,
-      lineHeights: {
-        ...currentLines,
-        [toolbarState.activeField]: newSize
-      }
-    });
+  // Build layout, ensuring 'projects' appears in right column if not already placed
+  const defaultLayout = {
+    left: ['experience', 'education'],
+    right: ['skills', 'courses', 'languages', 'interests', 'projects']
+  };
+  const layout = data.columnLayout || defaultLayout;
+
+  // Add projects to right column if not present in either column
+  const allInLayout = [...layout.left, ...layout.right];
+  const hasProjects = (data.projects || []).some(p => !p.hidden);
+  const extraRight = hasProjects && !allInLayout.includes('projects') ? ['projects'] : [];
+
+  // Add custom sections not in layout
+  const customIds = (data.customSections || []).map(s => `custom-${s.id}`);
+  const extraCustom = customIds.filter(id => !allInLayout.includes(id));
+
+  const leftSections = layout.left.filter(s => knownSections.includes(s) && !hidden.includes(s));
+  const rightSections = [
+    ...layout.right.filter(s => knownSections.includes(s) && !hidden.includes(s)),
+    ...extraRight,
+    ...extraCustom.filter(id => !hidden.includes(id)),
+  ];
+
+  const scaleClass = fontSize === 'sm' ? 'scale-90 origin-top' : fontSize === 'lg' ? 'scale-105 origin-top' : '';
+
+  const templateProps = {
+    data,
+    fontSizes: data.fontSizes,
+    primaryColor,
+    accentColor,
+    textColor,
+    handleFocus,
+    onChange,
+    pageMarginPx: marginPx,
   };
 
+  // Non-modern templates render without the page-frame paging system for simplicity
+  // (they use the full content div approach)
+  if (data.template === 'executive' || data.template === 'timeline') {
+    const TemplateComp = data.template === 'executive' ? ExecutiveTemplate : TimelineTemplate;
+    return (
+      <div
+        id="resume-wrapper"
+        className={`flex flex-col items-start shrink-0 ${scaleClass}`}
+        style={{ gap: '32px', fontFamily: fontFamily || 'Ubuntu, sans-serif' }}
+      >
+        <ResumeToolbar
+          show={toolbarState.show}
+          top={toolbarState.top}
+          left={toolbarState.left}
+          onExecCommand={execCommand}
+          onUpdateFontSize={updateFontSize}
+          currentFontSize={toolbarState.activeField ? data.fontSizes[toolbarState.activeField] : data.fontSizes.content}
+          activeFormats={activeFormats}
+        />
+        {Array.from({ length: numPages }).map((_, pageIndex) => (
+          <React.Fragment key={`page-${pageIndex}`}>
+            {pageIndex > 0 && (
+              <div className="flex items-center gap-3 print:hidden" style={{ width: `${PAGE_W}px` }}>
+                <div className="h-px flex-1 bg-gray-300 dark:bg-zinc-600" />
+                <span className="text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest">Página {pageIndex + 1}</span>
+                <div className="h-px flex-1 bg-gray-300 dark:bg-zinc-600" />
+              </div>
+            )}
+            <div
+              className="resume-page-frame bg-white shadow-2xl"
+              style={{ width: `${PAGE_W}px`, height: `${PAGE_H}px`, overflow: 'hidden', position: 'relative', color: textColor }}
+            >
+              <div
+                ref={pageIndex === 0 ? firstPageInnerRef : undefined}
+                style={{ position: 'absolute', top: `${-pageIndex * PAGE_H}px`, left: 0, width: `${PAGE_W}px` }}
+              >
+                <TemplateComp {...templateProps} />
+              </div>
+            </div>
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  }
+
+  // Modern template (default)
   const resumeBody = (
-    <div style={{ fontFamily: `"${fontFamily}", sans-serif` }}>
+    <>
       <ResumeHeader
         data={data}
         fontSizes={data.fontSizes}
@@ -183,18 +273,21 @@ const Resume: React.FC<ResumeProps> = ({
         onChange={onChange}
       />
       <main
-        className={`p-10 pt-6 flex-1 ${
-          data.columnStyle === 'single' ? 'flex flex-col gap-y-10' : 'grid'
-        }`}
+        className={`flex-1 ${data.columnStyle === 'single' ? 'flex flex-col gap-y-10' : 'grid gap-x-12'}`}
         style={{
-          fontFamily: `"${fontFamily}", sans-serif`,
-          gridTemplateColumns: data.columnStyle === 'side-left' ? '240px 1fr' :
-                               data.columnStyle === 'side-right' ? '1fr 240px' :
-                               data.columnStyle === 'balanced' ? '1fr 1fr' : undefined
+          padding: `${marginPx}px`,
+          paddingTop: `${Math.round(marginPx * 0.6)}px`,
+          gridTemplateColumns:
+            data.columnStyle === 'side-left' ? '240px 1fr' :
+            data.columnStyle === 'side-right' ? '1fr 240px' :
+            data.columnStyle === 'balanced' ? '1fr 1fr' : undefined
         }}
       >
-        <div className="space-y-6 px-4">
-          {(data.columnStyle === 'single' ? [...new Set([...leftSections, ...rightSections])] : leftSections).map((sectionId, index) => {
+        <div className="space-y-6">
+          {(data.columnStyle === 'single'
+            ? [...new Set([...leftSections, ...rightSections])]
+            : leftSections
+          ).map((sectionId, index) => {
             const Component = sectionMap[sectionId];
             if (!Component) return null;
             return (
@@ -210,7 +303,7 @@ const Resume: React.FC<ResumeProps> = ({
           })}
         </div>
         {data.columnStyle !== 'single' && (
-          <div className="space-y-6 px-4">
+          <div className="space-y-6">
             {rightSections.map((sectionId, index) => {
               const Component = sectionMap[sectionId];
               if (!Component) return null;
@@ -228,16 +321,14 @@ const Resume: React.FC<ResumeProps> = ({
           </div>
         )}
       </main>
-    </div>
+    </>
   );
-
-  const scaleClass = fontSize === 'sm' ? 'scale-90 origin-top' : fontSize === 'lg' ? 'scale-105 origin-top' : '';
 
   return (
     <div
       id="resume-wrapper"
-      className={`flex flex-col items-start shrink-0 font-sans ${scaleClass}`}
-      style={{ gap: '32px' }}
+      className={`flex flex-col items-start shrink-0 ${scaleClass}`}
+      style={{ gap: '32px', fontFamily: fontFamily || undefined }}
     >
       <ResumeToolbar
         show={toolbarState.show}
@@ -245,19 +336,14 @@ const Resume: React.FC<ResumeProps> = ({
         left={toolbarState.left}
         onExecCommand={execCommand}
         onUpdateFontSize={updateFontSize}
-        onUpdateLineHeight={updateLineHeight}
-        currentFontSize={toolbarState.activeField ? data.fontSizes[toolbarState.activeField] : 12}
-        currentLineHeight={toolbarState.activeField ? (data.lineHeights?.[toolbarState.activeField] ?? 1.5) : 1.5}
+        currentFontSize={toolbarState.activeField ? data.fontSizes[toolbarState.activeField] : data.fontSizes.content}
         activeFormats={activeFormats}
       />
 
       {Array.from({ length: numPages }).map((_, pageIndex) => (
         <React.Fragment key={`page-${pageIndex}`}>
           {pageIndex > 0 && (
-            <div
-              className="flex items-center gap-3 print:hidden"
-              style={{ width: '816px' }}
-            >
+            <div className="flex items-center gap-3 print:hidden" style={{ width: `${PAGE_W}px` }}>
               <div className="h-px flex-1 bg-gray-300 dark:bg-zinc-600" />
               <span className="text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest">
                 Página {pageIndex + 1}
@@ -269,8 +355,8 @@ const Resume: React.FC<ResumeProps> = ({
           <div
             className="resume-page-frame bg-white shadow-2xl"
             style={{
-              width: '816px',
-              height: `${PAGE_HEIGHT}px`,
+              width: `${PAGE_W}px`,
+              height: `${PAGE_H}px`,
               overflow: 'hidden',
               position: 'relative',
               color: textColor,
@@ -280,9 +366,9 @@ const Resume: React.FC<ResumeProps> = ({
               ref={pageIndex === 0 ? firstPageInnerRef : undefined}
               style={{
                 position: 'absolute',
-                top: `${-pageIndex * PAGE_HEIGHT}px`,
+                top: `${-pageIndex * PAGE_H}px`,
                 left: 0,
-                width: '816px',
+                width: `${PAGE_W}px`,
               }}
             >
               {resumeBody}

@@ -3,7 +3,7 @@ import { ResumeData } from './types';
 export const INITIAL_DATA: ResumeData = {
   name: "John Doe Lorem",
   title: "Lorem Ipsum Dolor | Consectetur Adipiscing Elit",
-  summary: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+  summary: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
   contact: {
     email: "lorem.ipsum@example.com",
     phone: "+00 123 456 789",
@@ -79,6 +79,8 @@ export const INITIAL_DATA: ResumeData = {
     "Tempor Incididunt",
     "Magna Aliqua"
   ],
+  projects: [],
+  customSections: [],
   fontSizes: {
     name: 36,
     title: 18,
@@ -110,5 +112,9 @@ export const INITIAL_DATA: ResumeData = {
     right: ['skills', 'courses', 'languages', 'interests']
   },
   columnStyle: 'balanced',
-  sectionStyle: 'modern'
+  sectionStyle: 'modern',
+  sectionNames: {},
+  pageFormat: 'Letter',
+  pageMargin: 'normal',
+  template: 'modern'
 };
