@@ -193,7 +193,7 @@ const Resume: React.FC<ResumeProps> = ({
                                data.columnStyle === 'balanced' ? '1fr 1fr' : undefined
         }}
       >
-        <div className="space-y-6">
+        <div className="space-y-6 px-4">
           {(data.columnStyle === 'single' ? [...new Set([...leftSections, ...rightSections])] : leftSections).map((sectionId, index) => {
             const Component = sectionMap[sectionId];
             if (!Component) return null;
@@ -210,7 +210,7 @@ const Resume: React.FC<ResumeProps> = ({
           })}
         </div>
         {data.columnStyle !== 'single' && (
-          <div className="space-y-6">
+          <div className="space-y-6 px-4">
             {rightSections.map((sectionId, index) => {
               const Component = sectionMap[sectionId];
               if (!Component) return null;
