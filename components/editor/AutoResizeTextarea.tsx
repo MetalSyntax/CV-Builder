@@ -25,7 +25,7 @@ export const AutoResizeTextarea: React.FC<AutoResizeTextareaProps> = ({
       value={value}
       rows={1}
       className={className}
-      style={{ overflow: 'hidden' }}
+      style={{ overflow: 'hidden', fontSize: 'max(12px, 0.75rem)' }}
       {...props}
     />
   );

@@ -94,7 +94,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Descripción</label>
                     <AutoResizeTextarea value={proj.description} onChange={(e) => updateProject(idx, 'description', e.target.value)} className="w-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-lg py-1.5 px-3 text-xs text-gray-700 dark:text-zinc-300 focus:ring-1 focus:ring-teal-500/30 outline-none leading-normal" placeholder="Describe el proyecto, sus objetivos y resultados..." />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3">
                     <div className="space-y-1">
                       <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">GitHub URL</label>
                       <input value={proj.githubUrl || ''} onChange={(e) => updateProject(idx, 'githubUrl', e.target.value)} className="w-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-lg py-1.5 px-3 text-xs text-gray-700 dark:text-zinc-300 focus:ring-1 focus:ring-teal-500/30 outline-none" placeholder="github.com/user/repo" />

@@ -46,7 +46,7 @@ export const PersonalForm: React.FC<PersonalFormProps> = ({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div className="space-y-1.5">
             <label className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">
               <Mail size={10} /> Email
@@ -81,7 +81,7 @@ export const PersonalForm: React.FC<PersonalFormProps> = ({
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <div className="space-y-1.5">
             <label className="flex items-center gap-1.5 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">
               <LinkIcon size={10} /> Web

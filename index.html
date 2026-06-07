@@ -2,27 +2,33 @@
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CV Builder - Crea tu Currículum Profesional Gratis</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vitae — Crea tu Currículum Profesional</title>
+
     <!-- SEO Meta Tags -->
-    <meta name="description" content="CV Builder es una herramienta gratuita y fácil de usar para crear tu currículum vitae profesional en minutos. Elige diseños, personaliza colores y exporta a PDF." />
-    <meta name="keywords" content="CV, currículum, curriculum vitae, creador de CV, resume builder, encontrar trabajo, plantillas CV, exportar PDF" />
-    <meta name="author" content="CV Builder" />
-    
+    <meta name="description" content="Vitae es la herramienta gratuita para crear tu currículum vitae profesional en minutos. Diseños elegantes, exporta a PDF.">
+    <meta name="keywords" content="Vitae, CV, currículum, resume builder, crear CV, exportar PDF">
+    <meta name="author" content="Vitae">
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="CV Builder - Crea tu Currículum Profesional Gratis" />
-    <meta property="og:description" content="CV Builder es una herramienta gratuita y fácil de usar para crear tu currículum vitae profesional en minutos. Elige diseños, personaliza colores y exporta a PDF." />
+    <meta property="og:title" content="Vitae — Crea tu Currículum Profesional">
+    <meta property="og:description" content="Vitae es la herramienta gratuita para crear tu currículum vitae profesional en minutos.">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:title" content="CV Builder - Crea tu Currículum Profesional Gratis" />
-    <meta property="twitter:description" content="CV Builder es una herramienta gratuita y fácil de usar para crear tu currículum vitae profesional en minutos. Elige diseños, personaliza colores y exporta a PDF." />
+    <meta property="twitter:title" content="Vitae — Crea tu Currículum Profesional">
+    <meta property="twitter:description" content="Vitae es la herramienta gratuita para crear tu currículum vitae profesional en minutos.">
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="theme-color" content="#3B82F6" />
+    <meta name="theme-color" content="#14B8A6">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Vitae">
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -30,127 +36,6 @@
       href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap"
       rel="stylesheet"
     />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ["Ubuntu", "sans-serif"],
-            },
-            screens: {
-              print: { raw: "print" },
-            },
-          },
-        },
-      };
-    </script>
-    <style>
-      body {
-        font-family: "Ubuntu", sans-serif;
-      }
-      @media print {
-        @page {
-          size: letter;
-          margin: 0;
-        }
-        body, html {
-          margin: 0 !important;
-          padding: 0 !important;
-          background: white !important;
-          width: 100% !important;
-          height: 100% !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        * {
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        /* Strip app shell backgrounds and padding so they don't bleed into print */
-        #root,
-        body > div,
-        body > div > main,
-        .min-h-screen {
-          background: white !important;
-          padding: 0 !important;
-          margin: 0 !important;
-          display: block !important;
-          overflow: visible !important;
-          width: auto !important;
-          height: auto !important;
-          min-height: 0 !important;
-          box-shadow: none !important;
-          border: none !important;
-        }
-        .print\:hidden {
-          display: none !important;
-        }
-        #resume-wrapper {
-          transform: none !important;
-          scale: 1 !important;
-          gap: 0 !important;
-          display: block !important;
-          padding: 0 !important;
-          margin: 0 auto !important;
-          width: 215.9mm !important;
-        }
-        .resume-page-frame {
-          width: 215.9mm !important;
-          height: 279.4mm !important;
-          overflow: hidden !important;
-          box-shadow: none !important;
-          outline: none !important;
-          border: none !important;
-          break-after: page;
-          page-break-after: always;
-          position: relative !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          transform: none !important;
-          background: white !important;
-        }
-        .resume-page-frame:last-of-type {
-          break-after: auto !important;
-          page-break-after: auto !important;
-        }
-        .resume-page-frame > div {
-          width: 215.9mm !important;
-        }
-        /* Hide page separators in print */
-        #resume-wrapper > *:not(.resume-page-frame) {
-          display: none !important;
-        }
-      }
-
-      /* Ocultar barras de desplazamiento en toda la app */
-      * {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-      }
-      *::-webkit-scrollbar {
-        display: none;
-      }
-
-      /* Evitar scrolls en campos editables */
-      [contenteditable] {
-        overflow-y: hidden !important;
-        overflow-x: hidden !important;
-      }
-
-      @media print {
-        [contenteditable] {
-          outline: none !important;
-          box-shadow: none !important;
-        }
-      }
-
-      .experience-tasks li::marker {
-        content: "•\2009";
-        color: var(--accent-color, inherit);
-      }
-    </style>
   </head>
   <body class="bg-gray-100 text-gray-800">
     <div id="root"></div>

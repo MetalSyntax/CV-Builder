@@ -1,0 +1,75 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+
+@theme {
+  --font-family-sans: "Ubuntu", sans-serif;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+/* Animaciones para bottom sheet y drawer */
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+/* Custom scrollbar hide */
+* { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { display: none; }
+[contenteditable] { overflow-y: hidden !important; overflow-x: hidden !important; }
+
+body {
+  font-family: "Ubuntu", sans-serif;
+}
+
+.experience-tasks li::marker {
+  content: "•\2009";
+  color: var(--accent-color, inherit);
+}
+
+@media print {
+  @page { size: letter; margin: 0; }
+  body, html {
+    margin: 0 !important; padding: 0 !important;
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  #root, body > div, body > div > main, .min-h-screen {
+    background: white !important; padding: 0 !important; margin: 0 !important;
+    display: block !important; overflow: visible !important;
+    width: auto !important; height: auto !important;
+    min-height: 0 !important; box-shadow: none !important; border: none !important;
+  }
+  .print\:hidden { display: none !important; }
+  #resume-wrapper {
+    transform: none !important; scale: 1 !important; gap: 0 !important;
+    display: block !important; padding: 0 !important;
+    margin: 0 auto !important; width: 215.9mm !important;
+  }
+  .resume-page-frame {
+    width: 215.9mm !important; height: 279.4mm !important;
+    overflow: hidden !important; box-shadow: none !important;
+    outline: none !important; border: none !important;
+    break-after: page; page-break-after: always;
+    position: relative !important; margin: 0 !important;
+    padding: 0 !important; transform: none !important; background: white !important;
+  }
+  .resume-page-frame:last-of-type { break-after: auto !important; page-break-after: auto !important; }
+  .resume-page-frame > div { width: 215.9mm !important; }
+  #resume-wrapper > *:not(.resume-page-frame) { display: none !important; }
+  [contenteditable] { outline: none !important; box-shadow: none !important; }
+}

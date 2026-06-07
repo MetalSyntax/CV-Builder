@@ -130,7 +130,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({
 
               {!isCollapsed && (
               <div className="px-4 pb-4 border-t border-gray-100 dark:border-zinc-800 pt-3">
-                <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="grid grid-cols-1 gap-3 mb-4">
                   <div className="space-y-1">
                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Título / Grado</label>
                   <AutoResizeTextarea
@@ -173,7 +173,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({
                   }
                 />
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   {showManual[idx] && (
                     <div className="space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
                       <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Periodo (Manual)</label>

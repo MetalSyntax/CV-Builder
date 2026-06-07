@@ -37,11 +37,12 @@ export const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
         {extraAction}
       </div>
       <div className="relative group">
-        <input 
+        <input
           type="date"
           value={date}
           onChange={(e) => handleUpdate(e.target.value)}
           className="w-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl py-2 px-3 text-[11px] font-bold text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-teal-500/10 focus:border-teal-500/50 transition-all cursor-pointer"
+          style={{ fontSize: 'max(12px, 0.75rem)' }}
         />
       </div>
     </div>

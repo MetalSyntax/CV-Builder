@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Download, Printer, Settings, Upload, RefreshCw, Edit3, Palette, FileText, Moon, Sun, Type, Undo2, Redo2, User, Globe } from 'lucide-react';
+import { Download, Printer, Settings, Upload, RefreshCw, Edit3, Palette, FileText, Moon, Sun, Type, Undo2, Redo2, User, Globe, Menu, Eye } from 'lucide-react';
 import Resume from './components/Resume';
 import ContentEditor from './components/ContentEditor';
 import { SectionManager } from './components/editor/SectionManager';
@@ -9,13 +9,16 @@ import { ResumeData } from './types';
 import { parseResumeTxt } from './utils/resumeParser';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { 
-  initDB, getAllResumes, saveResume, createNewResume, deleteResume, ResumeRecord 
+import {
+  initDB, getAllResumes, saveResume, createNewResume, deleteResume, ResumeRecord
 } from './utils/db';
 import { Plus, Trash2, FolderOpen, Copy, Save, Check, XCircle } from 'lucide-react';
 import { ToastContainer, ToastType } from './components/common/Toast';
 import { Modal } from './components/common/Modal';
 import { CVScore } from './components/CVScore';
+import { useIsMobile } from './hooks/useIsMobile';
+import { BottomNav } from './components/common/BottomNav';
+import { DrawerNav } from './components/common/DrawerNav';
 
 // Icono de usuario gris para imagen por defecto (SVG Data URL)
 const DEFAULT_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239ca3af'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'%3E%3C/path%3E%3C/svg%3E";
@@ -168,9 +171,17 @@ const translateResumeData = (data: ResumeData, targetLang: 'en' | 'pt'): ResumeD
   return dup;
 };
 
+type MobileTab = 'content' | 'preview' | 'design' | 'user';
+
 const App: React.FC = () => {
   // Tabs: 'design' | 'content' | 'user'
   const [activeTab, setActiveTab] = useState<'design' | 'content' | 'user'>('design');
+
+  // Mobile state
+  const isMobile = useIsMobile();
+  const [mobileTab, setMobileTab] = useState<MobileTab>('content');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [mobileScale, setMobileScale] = useState(1);
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem('cv_builder_darkMode');
     return saved ? JSON.parse(saved) : false;
@@ -184,6 +195,26 @@ const App: React.FC = () => {
     }
     localStorage.setItem('cv_builder_darkMode', JSON.stringify(darkMode));
   }, [darkMode]);
+
+  // Mobile scale calculation
+  useEffect(() => {
+    const update = () => {
+      if (window.innerWidth < 768) {
+        setMobileScale((window.innerWidth - 16) / 794);
+      }
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  // Sync mobileTab -> activeTab (desktop tabs)
+  useEffect(() => {
+    if (!isMobile) return;
+    if (mobileTab !== 'preview') {
+      setActiveTab(mobileTab as 'design' | 'content' | 'user');
+    }
+  }, [mobileTab, isMobile]);
 
   // IndexedDB Resumes State
   const [allResumes, setAllResumes] = useState<ResumeRecord[]>([]);
@@ -232,8 +263,11 @@ const App: React.FC = () => {
     isOpen: boolean;
     title: string;
     message: string;
-    type: 'confirm' | 'prompt';
+    type: 'confirm' | 'prompt' | 'select';
     defaultValue?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    options?: { value: string; label: string }[];
     onConfirm: (value?: string) => void;
   }>({
     isOpen: false,
@@ -855,12 +889,286 @@ const App: React.FC = () => {
     });
   };
 
+  // Shared JSX fragments reused in desktop sidebar and mobile panels
+  const designTabContent = (
+    <div className="space-y-6">
+      <SectionManager data={resumeData} updateField={updateField} />
+      <AppearanceForm
+        data={resumeData}
+        updateField={updateField}
+        updateFontSize={updateFontSize}
+        contactBarLayout={contactBarLayout}
+        setContactBarLayout={setContactBarLayout}
+        fontFamily={fontFamily}
+        setFontFamily={setFontFamily}
+      />
+      {/* Color Controls */}
+      <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400 mb-1">
+          <Palette size={16} />
+          <h3 className="font-bold text-sm uppercase tracking-wider">Configuración Visual</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-4">
+          <HexColorPicker label="Encabezado" value={primaryColor} onChange={setPrimaryColor} />
+          <HexColorPicker label="Seccs / Título" value={accentColor} onChange={setAccentColor} />
+          <HexColorPicker label="Contacto" value={contactBarColor} onChange={setContactBarColor} />
+          <HexColorPicker label="Texto" value={textColor} onChange={setTextColor} />
+        </div>
+      </div>
+      {/* Theme Presets */}
+      <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400 mb-1">
+          <Type size={16} />
+          <h3 className="font-bold text-sm uppercase tracking-wider">Temas Master</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {THEMES.map((theme, i) => {
+            const isSelected =
+              primaryColor.toLowerCase() === theme.primary.toLowerCase() &&
+              contactBarColor.toLowerCase() === theme.contact.toLowerCase() &&
+              accentColor.toLowerCase() === theme.accent.toLowerCase();
+            return (
+              <button
+                key={i}
+                onClick={() => applyTheme(theme)}
+                className={`group relative flex flex-col gap-2 p-2.5 rounded-xl border transition-all text-left shadow-sm active:scale-95 ${
+                  isSelected
+                    ? 'bg-teal-500 border-teal-500 ring-2 ring-teal-500 ring-offset-2 dark:ring-offset-zinc-950'
+                    : 'bg-white dark:bg-zinc-900/40 border-gray-100 dark:border-zinc-800/50 hover:border-teal-400 dark:hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-zinc-800'
+                }`}
+              >
+                <div className="flex flex-col gap-0.5 w-full rounded-md overflow-hidden bg-gray-100 dark:bg-zinc-900">
+                  <div className="w-full h-3" style={{ backgroundColor: theme.primary }}></div>
+                  <div className="w-full h-1.5" style={{ backgroundColor: theme.contact }}></div>
+                </div>
+                <span className={`text-[10px] font-bold ${isSelected ? 'text-white' : 'text-gray-500 dark:text-zinc-400'} group-hover:text-teal-600 dark:group-hover:text-teal-400`}>
+                  {theme.name}
+                </span>
+                {isSelected && (
+                  <div className="absolute -top-1 -right-1 bg-white text-teal-500 rounded-full p-0.5 shadow-md">
+                    <Check size={10} strokeWidth={4} />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <CVScore data={resumeData} />
+      {/* Profile Image Control */}
+      <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400 mb-1">
+          <Upload size={16} />
+          <h3 className="font-bold text-sm uppercase tracking-wider">Identidad Visual</h3>
+        </div>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => imageInputRef.current?.click()}
+            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 rounded-xl transition text-xs font-black shadow-lg shadow-zinc-200 dark:shadow-none uppercase tracking-widest"
+          >
+            <Upload size={14} />
+            Subir Foto
+          </button>
+          <input type="file" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+          {resumeData.profileImage && (
+            <button
+              onClick={resetImage}
+              className="flex items-center justify-center gap-2 w-full py-2 px-4 text-red-500 hover:bg-red-50 dark:hover:bg-red-400/10 rounded-lg transition text-[10px] font-bold uppercase tracking-widest"
+            >
+              <RefreshCw size={10} />
+              Borrar Imagen
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const userTabContent = (
+    <div className="space-y-6">
+      {/* Resume Manager Card */}
+      <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400">
+            <FolderOpen size={18} />
+            <h3 className="font-bold text-sm uppercase tracking-wider">Mis Currículums</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleSave()}
+              disabled={isSaving}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shadow-sm ${
+                showSavedFeedback
+                  ? 'bg-green-500 text-white'
+                  : 'bg-teal-500 hover:bg-teal-600 text-white active:scale-95'
+              }`}
+            >
+              {showSavedFeedback ? <Check size={12} /> : isSaving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+              {showSavedFeedback ? 'Guardado' : 'Guardar'}
+            </button>
+            <button
+              onClick={handleAddNewResume}
+              className="p-1.5 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 transition-all"
+              title="Nuevo CV"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+        </div>
+        <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+          {allResumes.map(res => (
+            <div
+              key={res.id}
+              onClick={() => handleSwitchResume(res.id)}
+              className={`group flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+                currentId === res.id
+                  ? 'bg-teal-500/5 border-teal-500/30 ring-1 ring-teal-500/20'
+                  : 'bg-gray-50/50 dark:bg-zinc-950/50 border-gray-100 dark:border-zinc-800 hover:border-teal-500/20'
+              }`}
+            >
+              <div className="flex flex-col min-w-0 flex-1">
+                {editingResumeId === res.id ? (
+                  <div className="flex items-center gap-1 w-full mr-2">
+                    <input
+                      autoFocus
+                      type="text"
+                      value={editingResumeName}
+                      onChange={(e) => setEditingResumeName(e.target.value)}
+                      onBlur={handleUpdateResumeName}
+                      onKeyDown={handleKeyDownEditing}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-base font-bold bg-white dark:bg-zinc-800 border border-teal-500 rounded-lg px-2 py-1 outline-none w-full text-teal-600 dark:text-teal-400 shadow-sm"
+                    />
+                  </div>
+                ) : (
+                  <span
+                    onClick={(e) => handleStartEditing(res.id, res.name, e)}
+                    className={`text-xs font-bold truncate ${currentId === res.id ? 'text-teal-600 dark:text-teal-400' : 'text-gray-700 dark:text-zinc-300'}`}
+                  >
+                    {res.name}
+                  </span>
+                )}
+                <span className="text-[9px] text-gray-400 dark:text-zinc-500 uppercase font-bold tracking-tighter">
+                  Editado: {new Date(res.updatedAt).toLocaleDateString()}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={(e) => handleStartEditing(res.id, res.name, e)} className="p-1.5 text-gray-400 hover:text-teal-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm min-h-[44px] min-w-[44px] flex items-center justify-center" title="Renombrar">
+                  <Edit3 size={12} />
+                </button>
+                <button onClick={(e) => handleDuplicateResume(res.id, e)} className="p-1.5 text-gray-400 hover:text-teal-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm min-h-[44px] min-w-[44px] flex items-center justify-center" title="Duplicar">
+                  <Copy size={12} />
+                </button>
+                <button onClick={(e) => handleTranslateCVMenu(res.id, e)} className="p-1.5 text-gray-400 hover:text-teal-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm min-h-[44px] min-w-[44px] flex items-center justify-center" title="Traducir / Idiomas">
+                  <Globe size={12} />
+                </button>
+                <button onClick={(e) => handleDeleteResume(res.id, e)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm min-h-[44px] min-w-[44px] flex items-center justify-center" title="Eliminar">
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Import TXT Container */}
+      <div className="p-5 bg-gradient-to-br from-teal-500/10 to-transparent dark:from-teal-500/5 border border-teal-500/20 dark:border-teal-500/10 rounded-2xl space-y-4 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+          <FileText size={64} className="text-teal-600" />
+        </div>
+        <div className="relative z-10 flex justify-between items-start">
+          <div>
+            <h3 className="text-xs font-black text-teal-700 dark:text-teal-400 uppercase tracking-[0.2em] mb-1">AI Import</h3>
+            <p className="text-[10px] text-teal-600/80 dark:text-zinc-400 leading-relaxed max-w-[80%]">
+              ¿Ya tienes un CV? Impórtalo en formato .txt para que lo analicemos por ti.
+            </p>
+          </div>
+          <button onClick={handleReset} className="p-2 text-teal-600/50 hover:text-red-500 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center" title="Reiniciar todo">
+            <RefreshCw size={14} />
+          </button>
+        </div>
+        <button
+          onClick={() => txtInputRef.current?.click()}
+          className="w-auto bg-teal-500 hover:bg-teal-600 text-white text-[10px] font-black uppercase tracking-widest py-2 px-4 rounded-xl transition-all shadow-md shadow-teal-500/20 active:scale-95 inline-flex items-center gap-2 min-h-[44px]"
+        >
+          <Upload size={12} />
+          Seleccionar Archivo
+        </button>
+        <input type="file" ref={txtInputRef} onChange={handleTxtImport} accept=".txt" className="hidden" />
+      </div>
+      {/* Backup JSON */}
+      <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400">
+          <Download size={18} />
+          <h3 className="font-bold text-sm uppercase tracking-wider">Copia de Seguridad</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={handleExportJSON}
+            className="flex items-center justify-center gap-2 py-2.5 px-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-teal-500 hover:text-white rounded-xl transition text-[10px] font-black uppercase tracking-widest border border-gray-200 dark:border-zinc-700 min-h-[44px]"
+          >
+            <Download size={14} />
+            Exportar JSON
+          </button>
+          <button
+            onClick={() => jsonInputRef.current?.click()}
+            className="flex items-center justify-center gap-2 py-2.5 px-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-teal-500 hover:text-white rounded-xl transition text-[10px] font-black uppercase tracking-widest border border-gray-200 dark:border-zinc-700 min-h-[44px]"
+          >
+            <Upload size={14} />
+            Importar JSON
+          </button>
+          <input type="file" ref={jsonInputRef} onChange={handleImportJSON} accept=".json" className="hidden" />
+        </div>
+      </div>
+    </div>
+  );
+
+  const resumePreview = (
+    <Resume
+      data={resumeData}
+      primaryColor={primaryColor}
+      accentColor={accentColor}
+      contactBarColor={contactBarColor}
+      textColor={textColor}
+      fontSize={fontSize}
+      contactBarLayout={contactBarLayout}
+      fontFamily={fontFamily}
+      onChange={setResumeData}
+    />
+  );
+
   return (
     <div className={`min-h-screen flex flex-col md:flex-row transition-colors duration-300 ${darkMode ? 'dark bg-black' : 'bg-gray-100'} print:bg-transparent print:min-h-0`}>
 
-      {/* Sidebar Controls */}
-      <aside className="w-full md:w-96 bg-white dark:bg-zinc-950 shadow-xl z-20 print:hidden flex-shrink-0 h-screen sticky top-0 flex flex-col border-r border-gray-200 dark:border-zinc-800">
-        
+      {/* MOBILE HEADER - solo visible en mobile */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white dark:bg-zinc-950 border-b border-gray-200 dark:border-zinc-800 flex items-center justify-between px-4 h-14 print:hidden"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <button onClick={() => setDrawerOpen(true)} className="p-2 text-gray-500 dark:text-zinc-400 min-h-[44px] min-w-[44px] flex items-center justify-center">
+          <Menu size={22} />
+        </button>
+        <div className="flex items-center gap-2">
+          <span className="font-black text-gray-800 dark:text-white text-sm tracking-tight">VITAE</span>
+          <span className="text-[8px] font-bold bg-teal-500/20 text-teal-600 dark:text-teal-400 px-1.5 py-0.5 rounded-full uppercase">v3.0</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setDarkMode(!darkMode)} className="p-2 text-gray-500 dark:text-zinc-400 min-h-[44px] min-w-[44px] flex items-center justify-center">
+            {darkMode ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-indigo-400" />}
+          </button>
+          <button onClick={handleDownloadPDF} disabled={isExporting} className="p-2 text-teal-500 min-h-[44px] min-w-[44px] flex items-center justify-center">
+            {isExporting ? <RefreshCw size={18} className="animate-spin" /> : <Download size={18} />}
+          </button>
+        </div>
+      </header>
+
+      {/* DRAWER (mobile CVs manager) */}
+      <DrawerNav isOpen={drawerOpen} onClose={() => setDrawerOpen(false)}>
+        <div className="p-5 space-y-4">
+          {userTabContent}
+        </div>
+      </DrawerNav>
+
+      {/* SIDEBAR DESKTOP - solo en md+ */}
+      <aside className="hidden md:flex w-96 bg-white dark:bg-zinc-950 shadow-xl z-20 print:hidden flex-shrink-0 h-screen sticky top-0 flex-col border-r border-gray-200 dark:border-zinc-800">
+
         {/* Sidebar Header */}
         <div className="flex-shrink-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md z-10 border-b border-gray-100 dark:border-zinc-900/50">
           <div className="p-5 flex justify-between items-center">
@@ -870,13 +1178,13 @@ const App: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-lg font-black text-gray-800 dark:text-white leading-none tracking-tight flex items-center gap-2">
-                  CV BUILDER
-                  <span className="text-[9px] font-bold bg-teal-500/20 text-teal-600 dark:text-teal-400 px-1.5 py-0.5 rounded-full uppercase tracking-wider">v2.0</span>
+                  VITAE
+                  <span className="text-[9px] font-bold bg-teal-500/20 text-teal-600 dark:text-teal-400 px-1.5 py-0.5 rounded-full uppercase tracking-wider">v3.0</span>
                 </h2>
-                <span className="text-[10px] font-bold text-teal-500 uppercase tracking-[0.2em] opacity-80">Workspace</span>
+                <span className="text-[10px] font-bold text-teal-500 uppercase tracking-[0.2em] opacity-80">CV Builder</span>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setDarkMode(!darkMode)}
               className="p-2.5 rounded-xl bg-gray-50 dark:bg-zinc-900 text-gray-500 dark:text-zinc-400 hover:bg-teal-50 dark:hover:bg-zinc-800 hover:text-teal-600 dark:hover:text-teal-400 transition-all shadow-sm border border-gray-100 dark:border-zinc-800"
               title={darkMode ? "Modo Claro" : "Modo Oscuro"}
@@ -884,24 +1192,24 @@ const App: React.FC = () => {
               {darkMode ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-indigo-400" />}
             </button>
           </div>
-          
+
           <div className="px-5 pb-4">
             <div className="flex p-1 bg-gray-100/50 dark:bg-zinc-900/50 rounded-xl border border-gray-100 dark:border-zinc-800">
-              <button 
+              <button
                 onClick={() => setActiveTab('design')}
                 className={`flex-1 py-1.5 text-xs font-bold flex items-center justify-center gap-2 rounded-lg transition-all ${activeTab === 'design' ? 'bg-white dark:bg-zinc-800 text-teal-600 dark:text-teal-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300'}`}
               >
                 <Palette size={14} />
                 Diseño
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab('content')}
                 className={`flex-1 py-1.5 text-xs font-bold flex items-center justify-center gap-2 rounded-lg transition-all ${activeTab === 'content' ? 'bg-white dark:bg-zinc-800 text-teal-600 dark:text-teal-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300'}`}
               >
                 <Edit3 size={14} />
                 Contenido
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab('user')}
                 className={`flex-1 py-1.5 text-xs font-bold flex items-center justify-center gap-2 rounded-lg transition-all ${activeTab === 'user' ? 'bg-white dark:bg-zinc-800 text-teal-600 dark:text-teal-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-zinc-300'}`}
               >
@@ -913,318 +1221,26 @@ const App: React.FC = () => {
         </div>
 
         {/* Sidebar Content (Scrollable) */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-5 space-y-6 custom-scrollbar bg-gray-50/30 dark:bg-black/20">
-          
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-5 space-y-6 bg-gray-50/30 dark:bg-black/20">
           {activeTab === 'design' && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
-              
-              {/* Layout Manager */}
-              <SectionManager data={resumeData} updateField={updateField} />
-
-              {/* Appearance Form */}
-              <AppearanceForm
-                data={resumeData}
-                updateField={updateField}
-                updateFontSize={updateFontSize}
-                contactBarLayout={contactBarLayout}
-                setContactBarLayout={setContactBarLayout}
-                fontFamily={fontFamily}
-                setFontFamily={setFontFamily}
-              />
-
-              {/* Color Controls */}
-              <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
-                <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400 mb-1">
-                  <Palette size={16} />
-                  <h3 className="font-bold text-sm uppercase tracking-wider">Configuración Visual</h3>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-                  <HexColorPicker 
-                    label="Encabezado" 
-                    value={primaryColor} 
-                    onChange={setPrimaryColor} 
-                  />
-                  <HexColorPicker 
-                    label="Seccs / Título" 
-                    value={accentColor} 
-                    onChange={setAccentColor} 
-                  />
-                  <HexColorPicker 
-                    label="Contacto" 
-                    value={contactBarColor} 
-                    onChange={setContactBarColor} 
-                  />
-                  <HexColorPicker 
-                    label="Texto" 
-                    value={textColor} 
-                    onChange={setTextColor} 
-                  />
-                </div>
-              </div>
-
-              {/* Theme Presets */}
-              <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
-                <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400 mb-1">
-                  <Type size={16} />
-                  <h3 className="font-bold text-sm uppercase tracking-wider">Temas Master</h3>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {THEMES.map((theme, i) => {
-                    const isSelected = 
-                      primaryColor.toLowerCase() === theme.primary.toLowerCase() && 
-                      contactBarColor.toLowerCase() === theme.contact.toLowerCase() &&
-                      accentColor.toLowerCase() === theme.accent.toLowerCase();
-
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => applyTheme(theme)}
-                        className={`group relative flex flex-col gap-2 p-2.5 rounded-xl border transition-all text-left shadow-sm active:scale-95 ${
-                          isSelected 
-                            ? 'bg-teal-500 border-teal-500 ring-2 ring-teal-500 ring-offset-2 dark:ring-offset-zinc-950' 
-                            : 'bg-white dark:bg-zinc-900/40 border-gray-100 dark:border-zinc-800/50 hover:border-teal-400 dark:hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-zinc-800'
-                        }`}
-                      >
-                        <div className="flex flex-col gap-0.5 w-full rounded-md overflow-hidden bg-gray-100 dark:bg-zinc-900">
-                          <div className="w-full h-3" style={{ backgroundColor: theme.primary }}></div>
-                          <div className="w-full h-1.5" style={{ backgroundColor: theme.contact }}></div>
-                        </div>
-                        <span className={`text-[10px] font-bold ${isSelected ? 'text-white' : 'text-gray-500 dark:text-zinc-400'} group-hover:text-teal-600 dark:group-hover:text-teal-400`}>
-                          {theme.name}
-                        </span>
-                        {isSelected && (
-                          <div className="absolute -top-1 -right-1 bg-white text-teal-500 rounded-full p-0.5 shadow-md">
-                            <Check size={10} strokeWidth={4} />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* CV Score */}
-              <CVScore data={resumeData} />
-
-              {/* Profile Image Control */}
-              <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
-                <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400 mb-1">
-                  <Upload size={16} />
-                  <h3 className="font-bold text-sm uppercase tracking-wider">Identidad Visual</h3>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <button 
-                      onClick={() => imageInputRef.current?.click()}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 rounded-xl transition text-xs font-black shadow-lg shadow-zinc-200 dark:shadow-none uppercase tracking-widest"
-                  >
-                    <Upload size={14} />
-                    Subir Foto
-                  </button>
-                  <input 
-                      type="file" 
-                      ref={imageInputRef} 
-                      onChange={handleImageUpload} 
-                      accept="image/*"
-                      className="hidden"
-                    />
-                    {resumeData.profileImage && (
-                      <button 
-                        onClick={resetImage}
-                        className="flex items-center justify-center gap-2 w-full py-2 px-4 text-red-500 hover:bg-red-50 dark:hover:bg-red-400/10 rounded-lg transition text-[10px] font-bold uppercase tracking-widest"
-                      >
-                        <RefreshCw size={10} />
-                        Borrar Imagen
-                      </button>
-                    )}
-                </div>
-              </div>
+            <div className="transition-all duration-300 space-y-6">
+              {designTabContent}
             </div>
           )}
-
           {activeTab === 'user' && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
-              {/* Resume Manager Card */}
-              <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400">
-                    <FolderOpen size={18} />
-                    <h3 className="font-bold text-sm uppercase tracking-wider">Mis Currículums</h3>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => handleSave()}
-                      disabled={isSaving}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shadow-sm ${
-                        showSavedFeedback 
-                          ? 'bg-green-500 text-white' 
-                          : 'bg-teal-500 hover:bg-teal-600 text-white active:scale-95'
-                      }`}
-                    >
-                      {showSavedFeedback ? <Check size={12} /> : isSaving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
-                      {showSavedFeedback ? 'Guardado' : 'Guardar'}
-                    </button>
-                    <button 
-                      onClick={handleAddNewResume}
-                      className="p-1.5 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-500/20 transition-all"
-                      title="Nuevo CV"
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="space-y-2 max-h-[200px] overflow-y-auto scrollbar-hide pr-1">
-                  {allResumes.map(res => (
-                    <div 
-                      key={res.id}
-                      onClick={() => handleSwitchResume(res.id)}
-                      className={`group flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
-                        currentId === res.id 
-                          ? 'bg-teal-500/5 border-teal-500/30 ring-1 ring-teal-500/20' 
-                          : 'bg-gray-50/50 dark:bg-zinc-950/50 border-gray-100 dark:border-zinc-800 hover:border-teal-500/20'
-                      }`}
-                    >
-                      <div className="flex flex-col min-w-0 flex-1">
-                        {editingResumeId === res.id ? (
-                          <div className="flex items-center gap-1 w-full mr-2">
-                            <input
-                              autoFocus
-                              type="text"
-                              value={editingResumeName}
-                              onChange={(e) => setEditingResumeName(e.target.value)}
-                              onBlur={handleUpdateResumeName}
-                              onKeyDown={handleKeyDownEditing}
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-xs font-bold bg-white dark:bg-zinc-800 border border-teal-500 rounded-lg px-2 py-1 outline-none w-full text-teal-600 dark:text-teal-400 shadow-sm"
-                            />
-                          </div>
-                        ) : (
-                          <span 
-                            onClick={(e) => handleStartEditing(res.id, res.name, e)}
-                            className={`text-xs font-bold truncate ${currentId === res.id ? 'text-teal-600 dark:text-teal-400' : 'text-gray-700 dark:text-zinc-300'}`}
-                          >
-                            {res.name}
-                          </span>
-                        )}
-                        <span className="text-[9px] text-gray-400 dark:text-zinc-500 uppercase font-bold tracking-tighter">
-                          Editado: {new Date(res.updatedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={(e) => handleStartEditing(res.id, res.name, e)}
-                          className="p-1.5 text-gray-400 hover:text-teal-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm"
-                          title="Renombrar"
-                        >
-                          <Edit3 size={12} />
-                        </button>
-                        <button 
-                          onClick={(e) => handleDuplicateResume(res.id, e)}
-                          className="p-1.5 text-gray-400 hover:text-teal-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm"
-                          title="Duplicar"
-                        >
-                          <Copy size={12} />
-                        </button>
-                        <button 
-                          onClick={(e) => handleTranslateCVMenu(res.id, e)}
-                          className="p-1.5 text-gray-400 hover:text-teal-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm"
-                          title="Traducir / Idiomas"
-                        >
-                          <Globe size={12} />
-                        </button>
-                        <button 
-                          onClick={(e) => handleDeleteResume(res.id, e)}
-                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-zinc-800 rounded-lg shadow-sm"
-                          title="Eliminar"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Import TXT Container */}
-              <div className="p-5 bg-gradient-to-br from-teal-500/10 to-transparent dark:from-teal-500/5 border border-teal-500/20 dark:border-teal-500/10 rounded-2xl space-y-4 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                  <FileText size={64} className="text-teal-600" />
-                </div>
-                <div className="relative z-10 flex justify-between items-start">
-                  <div>
-                    <h3 className="text-xs font-black text-teal-700 dark:text-teal-400 uppercase tracking-[0.2em] mb-1">AI Import</h3>
-                    <p className="text-[10px] text-teal-600/80 dark:text-zinc-400 leading-relaxed max-w-[80%]">
-                      ¿Ya tienes un CV? Impórtalo en formato .txt para que lo analicemos por ti.
-                    </p>
-                  </div>
-                  <button 
-                    onClick={handleReset}
-                    className="p-2 text-teal-600/50 hover:text-red-500 transition-colors"
-                    title="Reiniciar todo"
-                  >
-                    <RefreshCw size={14} />
-                  </button>
-                </div>
-                <button 
-                  onClick={() => txtInputRef.current?.click()}
-                  className="w-auto bg-teal-500 hover:bg-teal-600 text-white text-[10px] font-black uppercase tracking-widest py-2 px-4 rounded-xl transition-all shadow-md shadow-teal-500/20 active:scale-95 inline-flex items-center gap-2"
-                >
-                  <Upload size={12} />
-                  Seleccionar Archivo
-                </button>
-                <input 
-                  type="file" 
-                  ref={txtInputRef} 
-                  onChange={handleTxtImport}
-                  accept=".txt" 
-                  className="hidden"
-                />
-              </div>
-
-              {/* Backup JSON */}
-              <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
-                <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400">
-                  <Download size={18} />
-                  <h3 className="font-bold text-sm uppercase tracking-wider">Copia de Seguridad</h3>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button 
-                    onClick={handleExportJSON}
-                    className="flex items-center justify-center gap-2 py-2.5 px-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-teal-500 hover:text-white rounded-xl transition text-[10px] font-black uppercase tracking-widest border border-gray-200 dark:border-zinc-700"
-                  >
-                    <Download size={14} />
-                    Exportar JSON
-                  </button>
-                  <button 
-                    onClick={() => jsonInputRef.current?.click()}
-                    className="flex items-center justify-center gap-2 py-2.5 px-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-teal-500 hover:text-white rounded-xl transition text-[10px] font-black uppercase tracking-widest border border-gray-200 dark:border-zinc-700"
-                  >
-                    <Upload size={14} />
-                    Importar JSON
-                  </button>
-                  <input 
-                    type="file" 
-                    ref={jsonInputRef} 
-                    onChange={handleImportJSON}
-                    accept=".json" 
-                    className="hidden"
-                  />
-                </div>
-              </div>
+            <div className="transition-all duration-300 space-y-6">
+              {userTabContent}
             </div>
           )}
-
           {activeTab === 'content' && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
-              <ContentEditor 
-                data={resumeData} 
-                onChange={setResumeData} 
+            <div className="transition-all duration-300 space-y-6">
+              <ContentEditor
+                data={resumeData}
+                onChange={setResumeData}
                 onMoveItem={moveItem}
               />
             </div>
           )}
-
         </div>
 
         {/* Footer Actions */}
@@ -1251,74 +1267,104 @@ const App: React.FC = () => {
             )}
           </button>
         </div>
-        
+
       </aside>
 
-      {/* Main Preview Area */}
-      <main className="flex-1 flex justify-center p-4 md:p-10 overflow-auto bg-gray-200 dark:bg-black scrollbar-hide print:p-0 print:m-0 print:bg-transparent print:overflow-visible">
-        <Resume 
-          data={resumeData} 
-          primaryColor={primaryColor}
-          accentColor={accentColor}
-          contactBarColor={contactBarColor}
-          textColor={textColor}
-          fontSize={fontSize}
-          contactBarLayout={contactBarLayout}
-          fontFamily={fontFamily}
-          onChange={setResumeData}
-        />
+      {/* MOBILE PANELS - content/design/user tabs */}
+      {isMobile && mobileTab !== 'preview' && (
+        <div className="md:hidden flex-1 overflow-y-auto bg-gray-50 dark:bg-black" style={{ paddingTop: '56px', paddingBottom: '72px' }}>
+          <div className="p-4 space-y-6">
+            {mobileTab === 'design' && designTabContent}
+            {mobileTab === 'content' && (
+              <ContentEditor
+                data={resumeData}
+                onChange={setResumeData}
+                onMoveItem={moveItem}
+              />
+            )}
+            {mobileTab === 'user' && userTabContent}
+          </div>
+        </div>
+      )}
+
+      {/* MAIN PREVIEW AREA */}
+      <main className={`
+        print:p-0 print:m-0 print:bg-transparent print:overflow-visible
+        ${isMobile && mobileTab !== 'preview' ? 'hidden' : ''}
+        ${isMobile
+          ? 'flex-1 flex justify-center items-start bg-gray-200 dark:bg-black overflow-auto'
+          : 'flex-1 flex justify-center p-4 md:p-10 overflow-auto bg-gray-200 dark:bg-black'
+        }
+      `}
+        style={isMobile ? { paddingTop: '56px', paddingBottom: '72px' } : undefined}
+      >
+        {isMobile ? (
+          <div
+            style={{
+              width: `${794 * mobileScale}px`,
+              height: `${1123 * mobileScale}px`,
+              flexShrink: 0,
+            }}
+          >
+            <div style={{ transform: `scale(${mobileScale})`, transformOrigin: 'top left', width: 794 }}>
+              {resumePreview}
+            </div>
+          </div>
+        ) : (
+          resumePreview
+        )}
       </main>
 
-      {/* Floating Action Buttons */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50 print:hidden">
-        <button 
-          onClick={undo}
-          disabled={historyIndex <= 0}
-          className="p-4 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
-          title="Deshacer"
-        >
-          <Undo2 size={20} className="group-active:-translate-x-1 transition-transform" />
-        </button>
-        <button 
-          onClick={redo}
-          disabled={historyIndex >= history.length - 1}
-          className="p-4 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
-          title="Rehacer"
-        >
-          <Redo2 size={20} className="group-active:translate-x-1 transition-transform" />
-        </button>
-        
-        <button 
-          onClick={() => handleSave()}
-          disabled={isSaving || showSavedFeedback}
-          className={`p-4 rounded-full shadow-2xl transition-all flex items-center justify-center ${
-            showSavedFeedback 
-              ? 'bg-green-500 text-white scale-110' 
-              : 'bg-teal-600 hover:bg-teal-700 text-white active:scale-95'
-          }`}
-          title="Guardar Cambios"
-        >
-          {showSavedFeedback ? <Check size={24} /> : isSaving ? <RefreshCw size={24} className="animate-spin" /> : <Save size={24} />}
-        </button>
+      {/* BOTTOM NAV - solo mobile */}
+      {isMobile && (
+        <BottomNav activeTab={mobileTab} onChange={setMobileTab} />
+      )}
 
-        {/* Mobile Print Fab */}
-        <button 
-          onClick={handlePrint}
-          className="md:hidden p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl transition-all active:scale-95 flex items-center justify-center"
-          title="Imprimir / PDF"
-        >
-          <Printer size={24} />
-        </button>
-      </div>
+      {/* FLOATING ACTION BUTTONS - solo desktop */}
+      {!isMobile && (
+        <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50 print:hidden">
+          <button
+            onClick={undo}
+            disabled={historyIndex <= 0}
+            className="p-4 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+            title="Deshacer"
+          >
+            <Undo2 size={20} className="group-active:-translate-x-1 transition-transform" />
+          </button>
+          <button
+            onClick={redo}
+            disabled={historyIndex >= history.length - 1}
+            className="p-4 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-full shadow-lg border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+            title="Rehacer"
+          >
+            <Redo2 size={20} className="group-active:translate-x-1 transition-transform" />
+          </button>
+          <button
+            onClick={() => handleSave()}
+            disabled={isSaving || showSavedFeedback}
+            className={`p-4 rounded-full shadow-2xl transition-all flex items-center justify-center ${
+              showSavedFeedback
+                ? 'bg-green-500 text-white scale-110'
+                : 'bg-teal-600 hover:bg-teal-700 text-white active:scale-95'
+            }`}
+            title="Guardar Cambios"
+          >
+            {showSavedFeedback ? <Check size={24} /> : isSaving ? <RefreshCw size={24} className="animate-spin" /> : <Save size={24} />}
+          </button>
+        </div>
+      )}
 
       {/* Modal Dialogs */}
-      <Modal 
+      <Modal
         isOpen={modalConfig.isOpen}
         onClose={closeModal}
         title={modalConfig.title}
         message={modalConfig.message}
         type={modalConfig.type}
         defaultValue={modalConfig.defaultValue}
+        confirmLabel={modalConfig.confirmLabel}
+        cancelLabel={modalConfig.cancelLabel}
+        options={modalConfig.options}
         onConfirm={modalConfig.onConfirm}
       />
 

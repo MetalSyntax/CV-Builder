@@ -69,31 +69,33 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <div className="space-y-1.5">
           <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Desde</span>
           <div className="relative group">
-            <input 
+            <input
               type="date"
               value={start}
               onChange={(e) => handleUpdate(e.target.value, end, isActual)}
               className="w-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl py-2 px-3 text-[11px] font-bold text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-teal-500/10 focus:border-teal-500/50 transition-all cursor-pointer"
+              style={{ fontSize: 'max(12px, 0.75rem)' }}
             />
           </div>
         </div>
         <div className="space-y-1.5">
           <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Hasta</span>
           <div className="relative group">
-            <input 
+            <input
               type="date"
               value={end}
               disabled={isActual}
               onChange={(e) => handleUpdate(start, e.target.value, isActual)}
               className={`w-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl py-2 px-3 text-[11px] font-bold outline-none transition-all ${
-                isActual 
-                  ? 'bg-teal-500/5 text-teal-600/50 dark:text-teal-400/50 border-teal-500/10 cursor-not-allowed opacity-50' 
+                isActual
+                  ? 'bg-teal-500/5 text-teal-600/50 dark:text-teal-400/50 border-teal-500/10 cursor-not-allowed opacity-50'
                   : 'text-gray-800 dark:text-white focus:ring-2 focus:ring-teal-500/10 focus:border-teal-500/50 cursor-pointer'
               }`}
+              style={{ fontSize: 'max(12px, 0.75rem)' }}
             />
             {isActual && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

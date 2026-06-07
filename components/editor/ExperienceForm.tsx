@@ -186,7 +186,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({
               {/* Collapsible content */}
               {!isCollapsed && (
                 <div className="px-4 pb-4 space-y-4 border-t border-gray-100 dark:border-zinc-800 pt-3">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3">
                     <div className="space-y-1">
                       <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Cargo / Puesto</label>
                       <AutoResizeTextarea
@@ -229,7 +229,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({
                       }
                     />
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3">
                       {showManual[idx] && (
                         <div className="space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
                           <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Texto del Periodo (Manual)</label>
@@ -252,7 +252,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3">
                       <div className="space-y-1">
                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Descripción de la Empresa</label>
                         <AutoResizeTextarea

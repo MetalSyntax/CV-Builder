@@ -193,7 +193,7 @@ export const SectionManager: React.FC<SectionManagerProps> = ({
 
   return (
     <EditorFormSection title="Gestor de Columnas" subtitle="Arrastra para reordenar secciones" icon={Layout}>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <div className="space-y-2">
           <label className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] pl-1">Columna Izquierda</label>
           <div 

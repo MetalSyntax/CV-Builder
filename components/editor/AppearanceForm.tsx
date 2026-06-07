@@ -33,14 +33,15 @@ export const AppearanceForm: React.FC<AppearanceFormProps> = ({
         >
           <Minus size={12} />
         </button>
-        <input 
-          type="text" 
-          value={value} 
+        <input
+          type="text"
+          value={value}
           onChange={(e) => {
             const val = parseInt(e.target.value);
             if (!isNaN(val)) updateFontSize(field, Math.min(72, Math.max(6, val)));
           }}
           className="w-6 text-center bg-transparent text-[10px] font-bold text-teal-600 dark:text-teal-400 outline-none"
+          style={{ fontSize: 'max(12px, 0.625rem)' }}
         />
         <button 
           onClick={() => updateFontSize(field, Math.min(72, value + 1))}
@@ -125,7 +126,7 @@ export const AppearanceForm: React.FC<AppearanceFormProps> = ({
             options={templateOptions}
             onChange={(val) => updateField('template', val)}
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <CustomSelect
               label="Formato"
               icon={<FileText size={10} />}
@@ -146,7 +147,7 @@ export const AppearanceForm: React.FC<AppearanceFormProps> = ({
 
       <EditorFormSection title="Distribución y Estilo" subtitle="Personaliza la estructura visual" icon={Palette}>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <CustomSelect 
               label="Columnas" 
               icon={<Layout size={10} />} 
@@ -163,7 +164,7 @@ export const AppearanceForm: React.FC<AppearanceFormProps> = ({
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <CustomSelect 
               label="Fechas" 
               icon={<Calendar size={10} />} 
@@ -180,7 +181,7 @@ export const AppearanceForm: React.FC<AppearanceFormProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <CustomSelect 
               label="Distribución de Contacto" 
               icon={<Layout size={10} />} 
