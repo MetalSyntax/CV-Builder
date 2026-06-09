@@ -285,6 +285,48 @@ const App: React.FC = () => {
     setModalConfig(prev => ({ ...prev, isOpen: false }));
   };
 
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+
+  const checkForUpdates = async (manualCheck = false) => {
+    if (manualCheck) setIsCheckingUpdate(true);
+    try {
+      const res = await fetch('https://api.github.com/repos/MetalSyntax/CV-Builder/commits/main');
+      if (res.ok) {
+        const data = await res.json();
+        const latestSha = data.sha;
+        const storedSha = localStorage.getItem('cv_builder_version_sha');
+        
+        if (!storedSha) {
+          localStorage.setItem('cv_builder_version_sha', latestSha);
+          if (manualCheck) showToast('Ya tienes la última versión', 'info');
+        } else if (storedSha !== latestSha) {
+          openModal({
+            type: 'confirm',
+            title: 'Actualización Disponible',
+            message: 'Hay una nueva versión disponible (se detectó un push reciente). ¿Deseas actualizar ahora para obtener los últimos cambios?',
+            confirmLabel: 'Actualizar',
+            cancelLabel: 'Cancelar',
+            onConfirm: () => {
+              localStorage.setItem('cv_builder_version_sha', latestSha);
+              window.location.reload();
+            }
+          });
+        } else if (manualCheck) {
+          showToast('Ya tienes la última versión', 'info');
+        }
+      }
+    } catch (error) {
+      if (manualCheck) showToast('Error al buscar actualizaciones', 'error');
+    } finally {
+      if (manualCheck) setIsCheckingUpdate(false);
+    }
+  };
+
+  useEffect(() => {
+    checkForUpdates();
+  }, []);
+
+
   // Initialize DB and Load Data
   useEffect(() => {
     const loadData = async () => {
@@ -1119,6 +1161,21 @@ const App: React.FC = () => {
           <input type="file" ref={jsonInputRef} onChange={handleImportJSON} accept=".json" className="hidden" />
         </div>
       </div>
+      {/* Actualizaciones */}
+      <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400">
+          <RefreshCw size={18} />
+          <h3 className="font-bold text-sm uppercase tracking-wider">Actualizaciones</h3>
+        </div>
+        <button
+          onClick={() => checkForUpdates(true)}
+          disabled={isCheckingUpdate}
+          className="w-full flex items-center justify-center gap-2 py-3 px-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl transition text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+        >
+          {isCheckingUpdate ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+          Buscar Nuevas Versiones
+        </button>
+      </div>
     </div>
   );
 
@@ -1179,6 +1236,15 @@ const App: React.FC = () => {
         >
           <span className="text-[10px] uppercase tracking-widest">Descargar PDF</span>
           {isExporting ? <RefreshCw size={16} className="animate-spin" /> : <Download size={16} />}
+        </button>
+
+        <button
+          onClick={() => { checkForUpdates(true); setDrawerOpen(false); }}
+          disabled={isCheckingUpdate}
+          className="w-full flex items-center justify-between p-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-teal-500 hover:text-white rounded-xl transition font-bold disabled:opacity-50"
+        >
+          <span className="text-[10px] uppercase tracking-widest">Buscar Actualización</span>
+          {isCheckingUpdate ? <RefreshCw size={16} className="animate-spin" /> : <RefreshCw size={16} />}
         </button>
       </div>
     </div>
