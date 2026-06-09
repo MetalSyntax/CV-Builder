@@ -28,3 +28,5 @@ node_modules
 .antigravitycli
 CLAUDE*.md
 .claude
+favicon.svg
+*.py

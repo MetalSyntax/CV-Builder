@@ -1122,6 +1122,68 @@ const App: React.FC = () => {
     </div>
   );
 
+  const mobileMenuContent = (
+    <div className="space-y-4">
+      <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-4">
+        <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400 mb-2">
+          <Settings size={18} />
+          <h3 className="font-bold text-sm uppercase tracking-wider">Acciones Globales</h3>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={undo}
+            disabled={historyIndex <= 0}
+            className="flex items-center justify-center gap-2 py-3 px-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-teal-500 hover:text-white rounded-xl transition text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+          >
+            <Undo2 size={16} />
+            Deshacer
+          </button>
+          <button
+            onClick={redo}
+            disabled={historyIndex >= history.length - 1}
+            className="flex items-center justify-center gap-2 py-3 px-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-teal-500 hover:text-white rounded-xl transition text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+          >
+            <Redo2 size={16} />
+            Rehacer
+          </button>
+        </div>
+
+        <button
+          onClick={() => { handleSave(); setDrawerOpen(false); }}
+          disabled={isSaving || showSavedFeedback}
+          className="w-full flex items-center justify-center gap-2 py-3 px-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl transition text-[10px] font-black uppercase tracking-widest"
+        >
+          {showSavedFeedback ? <Check size={16} /> : isSaving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
+          {showSavedFeedback ? 'Guardado' : 'Guardar CV'}
+        </button>
+      </div>
+
+      <div className="bg-white dark:bg-zinc-900/40 p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/50 shadow-sm space-y-3">
+        <div className="flex items-center gap-2 text-teal-600 dark:text-teal-400 mb-2">
+          <Settings size={18} />
+          <h3 className="font-bold text-sm uppercase tracking-wider">Ajustes App</h3>
+        </div>
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className="w-full flex items-center justify-between p-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-teal-500 hover:text-white rounded-xl transition font-bold"
+        >
+          <span className="text-[10px] uppercase tracking-widest">Tema Visual</span>
+          {darkMode ? <Sun size={16} className="text-yellow-400" /> : <Moon size={16} className="text-indigo-400" />}
+        </button>
+
+        <button
+          onClick={() => { handleDownloadPDF(); setDrawerOpen(false); }}
+          disabled={isExporting}
+          className="w-full flex items-center justify-between p-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-teal-500 hover:text-white rounded-xl transition font-bold"
+        >
+          <span className="text-[10px] uppercase tracking-widest">Descargar PDF</span>
+          {isExporting ? <RefreshCw size={16} className="animate-spin" /> : <Download size={16} />}
+        </button>
+      </div>
+    </div>
+  );
+
   const resumePreview = (
     <Resume
       data={resumeData}
@@ -1159,10 +1221,10 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* DRAWER (mobile CVs manager) */}
+      {/* DRAWER (mobile actions menu) */}
       <DrawerNav isOpen={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <div className="p-5 space-y-4">
-          {userTabContent}
+          {mobileMenuContent}
         </div>
       </DrawerNav>
 
