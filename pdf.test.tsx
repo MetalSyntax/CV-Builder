@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import App from './App';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 
 // Setup basic mocks
-vi.mock('html2canvas', () => {
+vi.mock('html2canvas-pro', () => {
   return {
     default: vi.fn().mockResolvedValue({
       width: 816,

@@ -8,7 +8,7 @@ import { INITIAL_DATA } from './constants';
 import { ResumeData } from './types';
 import { parseResumeTxt } from './utils/resumeParser';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import {
   initDB, getAllResumes, saveResume, createNewResume, deleteResume, ResumeRecord
 } from './utils/db';
