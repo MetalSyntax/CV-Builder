@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
-import App from './App';
+import App from '../App';
 import html2canvas from 'html2canvas-pro';
 
 // Setup basic mocks
@@ -82,6 +82,8 @@ class ResizeObserverMock {
 }
 Object.defineProperty(window, 'ResizeObserver', { value: ResizeObserverMock });
 
+Object.defineProperty(window, 'print', { value: vi.fn(), writable: true });
+
 describe('PDF Generation and Print Layout Analysis', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -102,7 +104,7 @@ describe('PDF Generation and Print Layout Analysis', () => {
     document.body.appendChild(dummyFrame);
     
     // Buscamos el botón de descarga PDF usando SVG search o texto
-    const btn = await screen.findByText('Descargar PDF directo');
+    const btn = await screen.findByText('Descargar PDF Directo');
     fireEvent.click(btn);
     
     await waitFor(() => {
@@ -138,5 +140,64 @@ describe('PDF Generation and Print Layout Analysis', () => {
     expect(rootDiv).not.toBeNull();
     expect(rootDiv?.className).toContain('print:bg-transparent');
     expect(rootDiv?.className).toContain('print:min-h-0');
+  });
+
+  describe('VERDADERO ORIGEN: @page impreso debe coincidir con resumeData.pageFormat', () => {
+    // El CSS de index.css fija @page { size: letter } de forma estática. Cada .resume-page-frame
+    // mide su alto según pageFormat (A4 = 1122px, más alto que los 1056px de Letter), así que si
+    // la hoja física impresa se queda en Letter mientras el CV es A4, cada "página" de contenido
+    // sobra por encima del límite físico y arrastra el contenido de las páginas siguientes,
+    // descuadrando la paginación (por eso el body terminaba cortado / desplazado).
+
+    it('inyecta @page { size: letter } cuando el formato es Letter (default)', async () => {
+      render(<App />);
+
+      const btn = await screen.findByText('Guardar PDF');
+      fireEvent.click(btn);
+
+      await waitFor(() => {
+        expect(window.print).toHaveBeenCalled();
+      });
+
+      const style = document.getElementById('dynamic-page-size');
+      expect(style).not.toBeNull();
+      expect(style?.textContent).toContain('size: letter');
+    });
+
+    it('inyecta @page { size: A4 } cuando el usuario cambia el Formato a A4', async () => {
+      render(<App />);
+
+      // Cambia el CustomSelect "Formato" de Letter a A4 desde el panel de Diseño
+      const formatButton = await screen.findByText('Letter (EE.UU.)');
+      fireEvent.click(formatButton);
+      const a4Option = await screen.findByText('A4 (Internacional)');
+      fireEvent.click(a4Option);
+
+      const btn = await screen.findByText('Guardar PDF');
+      fireEvent.click(btn);
+
+      await waitFor(() => {
+        expect(window.print).toHaveBeenCalled();
+      });
+
+      const style = document.getElementById('dynamic-page-size');
+      expect(style).not.toBeNull();
+      expect(style?.textContent).toContain('size: A4');
+      expect(style?.textContent).not.toContain('size: letter');
+    });
+
+    it('reutiliza el mismo <style> en clics repetidos en vez de duplicarlo', async () => {
+      render(<App />);
+
+      const btn = await screen.findByText('Guardar PDF');
+      fireEvent.click(btn);
+      fireEvent.click(btn);
+
+      await waitFor(() => {
+        expect(window.print).toHaveBeenCalledTimes(2);
+      });
+
+      expect(document.querySelectorAll('#dynamic-page-size').length).toBe(1);
+    });
   });
 });

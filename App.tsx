@@ -688,15 +688,29 @@ const App: React.FC = () => {
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
     const year = now.getFullYear();
     const dateStr = `${day}_${month}_${year}`;
-    
+
     // Format name: Replace spaces with underscores and remove special characters
     const cleanName = resumeData.name
       .trim()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "") // Remove accents
       .replace(/\s+/g, '_');
-      
+
     document.title = `CV_${cleanName}_${dateStr}`;
+
+    // The @page rule in index.css is hardcoded to Letter. Each .resume-page-frame's
+    // height is sized to match resumeData.pageFormat though (A4 is taller than Letter),
+    // so when the format is A4 the physical page must be overridden to match \u2014 otherwise
+    // every page frame overflows the printed page and pagination drifts further with each page.
+    let pageSizeStyle = document.getElementById('dynamic-page-size') as HTMLStyleElement | null;
+    if (!pageSizeStyle) {
+      pageSizeStyle = document.createElement('style');
+      pageSizeStyle.id = 'dynamic-page-size';
+      document.head.appendChild(pageSizeStyle);
+    }
+    const cssPageSize = resumeData.pageFormat === 'A4' ? 'A4' : 'letter';
+    pageSizeStyle.textContent = `@media print { @page { size: ${cssPageSize}; margin: 0; } }`;
+
     window.print();
     setTimeout(() => {
       document.title = originalTitle;
